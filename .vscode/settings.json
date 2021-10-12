@@ -1,0 +1,24 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "embede.duckdns.org",
+            "port": 3306,
+            "askForPassword": true,
+            "driver": "MySQL",
+            "name": "embede",
+            "database": "rosa",
+            "username": "trading"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "stock.db",
+            "database": "${workspaceFolder:rts-stock}/storage/stock.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
