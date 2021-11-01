@@ -9,15 +9,15 @@ app = FastAPI()
 
 app.include_router(item.router)
 
-STATIC_FILES_DIR = join(dirname(abspath(__file__)), "static")
+STATIC_FILES_DIR = join(dirname(abspath(__file__)), 'assets')
 if not exists(STATIC_FILES_DIR):
-    STATIC_FILES_DIR = join(dirname(dirname(abspath(__file__))), "public")
+    STATIC_FILES_DIR = join(dirname(dirname(abspath(__file__))), 'public')
 
-app.mount("/static", StaticFiles(directory=STATIC_FILES_DIR), name="static")
+app.mount('/assets', StaticFiles(directory=STATIC_FILES_DIR), name='assets')
 
 @app.get('/', response_class=HTMLResponse)
 def get_index():
-    filename = join(dirname(abspath(__file__)), 'static', 'index.html')
+    filename = join(dirname(abspath(__file__)), 'assets', 'index.html')
     if not exists(filename):
         filename = join(dirname(dirname(abspath(__file__))), 'public', 'index.html')
     with open(filename) as f:
