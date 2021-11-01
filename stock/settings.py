@@ -18,7 +18,7 @@ class Settings(BaseSettings):
         return 'sqlite:///{}'.format(filename)
 
     class Config:
-        env_file = '.env'
+        env_file = join(dirname(abspath(__file__)), '.env')
 
 @lru_cache()
 def get_settings():
