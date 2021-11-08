@@ -90,6 +90,9 @@ function Navbar({ title, children }: {
               <MenuItem {...getMenuItemProps("/")}>
                 Home
               </MenuItem>
+              <MenuItem {...getMenuItemProps("/items")}>
+                Items
+              </MenuItem>
               <MenuItem {...getMenuItemProps("/kartu-stok")}>
                 Kartu Stok
               </MenuItem>
@@ -112,6 +115,7 @@ function Navbar({ title, children }: {
         </HStack>
         <HStack spacing={5} display={{ base: "none", md: "flex" }} {...containerProps}>
           <Button {...getNavProps("/")}><FaHome/></Button>
+          <Button {...getNavProps("/items")}>Items</Button>
           <Button {...getNavProps("/kartu-stok")}>Kartu Stok</Button>
           <Button {...getNavProps("/ringkasan-stok")}>Ringkasan Stok</Button>
           <Box flexGrow={1}></Box>

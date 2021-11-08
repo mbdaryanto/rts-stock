@@ -5,13 +5,26 @@ from sqlalchemy.orm import Session
 from pydantic import parse_obj_as, BaseModel
 
 from ..db.connection import get_session
-from ..db.schema import Item
-from ..model.item import ItemModel
+from ..db.schema import Item, ItemCategory
+from ..model.item import ItemModel, ItemCategoryModel
 
 router = APIRouter(
     prefix='/item',
     tags=['item'],
 )
+
+@router.get('/category/list', response_model=List[ItemCategoryModel])
+async def get_item_category_list(
+    q: str = '',
+    limit: int = 20,
+    offset: int = 0,
+    session: Session = Depends(get_session),
+):
+    result = session.execute(
+        select(ItemCategory).limit(limit).offset(offset)
+    ).scalars().all()
+
+    return result
 
 @router.get('/list', response_model=List[ItemModel])
 async def get_item_list(
@@ -38,6 +51,7 @@ async def get_item_by_id(
 class SaveResponse(BaseModel):
     success: bool = True
     error: Optional[str] = None
+    item: Optional[ItemModel] = None
 
 @router.post('/save', response_model=SaveResponse)
 async def save_item(
@@ -54,13 +68,14 @@ async def save_item(
                 )
             )
             assert result.rowcount == 1, 'Error item not found'
-
+            saved_item = item
         else:
             new_item = Item(**item.dict())
             session.add(new_item)
+            saved_item = ItemModel.from_orm(new_item)
 
         session.commit()
-        return SaveResponse()
+        return SaveResponse(item=saved_item)
 
     except Exception as ex:
         session.rollback()

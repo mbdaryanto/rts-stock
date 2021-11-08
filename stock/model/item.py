@@ -3,6 +3,13 @@ from decimal import Decimal
 from pydantic import BaseModel, constr
 
 
+class ItemCategoryModel(BaseModel):
+    id: Optional[int] = None
+    name: constr(max_length=100)
+
+    class Config:
+        orm_mode = True
+
 class ItemModel(BaseModel):
     id: Optional[int] = None
     code: constr(max_length=50)

@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import type { ComponentProps } from 'react'
 import { ChakraProvider } from '@chakra-ui/react'
 import { HashRouter as Router, Switch, Route, Redirect } from 'react-router-dom'
 import { AuthProvider, useAuthContext } from './components/auth'
+import ItemListPage from './pages/ItemList'
 
 const App = () => (
   <ChakraProvider>
@@ -11,9 +12,12 @@ const App = () => (
           <Route path="/login">
             Login Page
           </Route>
-          <PrivateRoute path="/" exact>
+          <Route path="/" exact>
             Main Page
-          </PrivateRoute>
+          </Route>
+          <Route path="/items">
+            <ItemListPage/>
+          </Route>
           <PrivateRoute path="/kartu-stok">
             Kartu Stok
           </PrivateRoute>
@@ -29,11 +33,10 @@ const App = () => (
   </ChakraProvider>
 )
 
-function PrivateRoute({ children, ...rest }: {
-  children: ReactNode,
-  [key: string]: any,
-}) {
-  const { auth } = useAuthContext();
+type PrivateRouteProps = ComponentProps<typeof Route>
+
+function PrivateRoute({ children, ...rest }: PrivateRouteProps) {
+  const { auth } = useAuthContext()
   return (
     <Route
       {...rest}
