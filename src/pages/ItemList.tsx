@@ -27,32 +27,74 @@ const ItemCategoriesSchema = yup.array().of(yup.object({
   name: yup.string().max(100).required(),
 })).ensure()
 
+enum EditorModeEnum {
+  insert,
+  update,
+}
+
 function ItemListPage() {
   const { isOpen, onClose, onOpen } = useDisclosure()
+  const [ editorMode, setEditorMode ] = useState<EditorModeEnum>(EditorModeEnum.insert)
+  const [ items, setItems ] = useState<Array<yup.TypeOf<typeof ItemSchema>>>([])
+  const [ itemToEdit, setItemToEdit ] = useState<yup.TypeOf<typeof ItemSchema> | undefined>()
+
+  const handleClose = (item?: yup.TypeOf<typeof ItemSchema>): void => {
+    if (!!item) {
+      if (editorMode === EditorModeEnum.insert) {
+        setItems(oldValues => [...oldValues, item])
+      } else {
+        setItems(oldValues => oldValues.map(value => value.id === item.id ? item : value))
+      }
+    }
+    onClose()
+  }
+
   return (
     <Navbar title="Items">
       <Heading>Items</Heading>
       <List>
-        <ListItem>
-          Name: Nama Barang
-          <IconButton aria-label="Edit" icon={<FaEdit/>}/>
-          <IconButton aria-label="Delete" icon={<FaTrash/>}/>
-        </ListItem>
+        {items.map(item => (
+          <ListItem key={item.id}>
+            <dl>
+              <dt>Kode</dt>
+              <dd>{item.code}</dd>
+              <dt>Nama</dt>
+              <dd>{item.name}</dd>
+              <dt>Kategori</dt>
+              <dd>{item.categoryId}</dd>
+              <dt>Deskripsi</dt>
+              <dd>{item.description}</dd>
+              <dt>Harga Jual</dt>
+              <dd>{item.sellingPrice}</dd>
+            </dl>
+            <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
+              setEditorMode(EditorModeEnum.update)
+              setItemToEdit(item)
+              onOpen()
+            }}/>
+            <IconButton aria-label="Delete" icon={<FaTrash/>}/>
+          </ListItem>
+        ))}
       </List>
-      <Button leftIcon={<FaPlus/>} onClick={onOpen}>
+      <Button leftIcon={<FaPlus/>} onClick={() => {
+        setEditorMode(EditorModeEnum.insert)
+        setItemToEdit(undefined)
+        onOpen()
+      }}>
         New Item
       </Button>
-      <ItemEditorDialog isOpen={isOpen} onClose={onClose}/>
+      <ItemEditorDialog item={itemToEdit} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
     </Navbar>
   )
 }
 
-interface ItemEditorDialogProps extends Omit<ComponentProps<typeof Modal>, 'children'> {
-  title?: string,
-  item?: yup.Asserts<typeof ItemSchema>,
+interface ItemEditorDialogProps extends Omit<ComponentProps<typeof Modal>, 'children' | 'onClose'> {
+  item?: yup.TypeOf<typeof ItemSchema>,
+  mode: EditorModeEnum,
+  onClose: (item?: yup.TypeOf<typeof ItemSchema>) => void,
 }
 
-function ItemEditorDialog({ title, item, ...rest }: ItemEditorDialogProps) {
+function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProps) {
   const initialFocusRef = useRef(null)
   const [categories, setCategories] = useState<yup.TypeOf<typeof ItemCategoriesSchema>>([])
   const toast = useToast()
@@ -66,31 +108,34 @@ function ItemEditorDialog({ title, item, ...rest }: ItemEditorDialogProps) {
     )
   }, [getJson])
 
-  const initialValues: yup.Asserts<typeof ItemSchema> = item || {
-    id: null,
-    code: '',
-    categoryId: undefined,
-    name: '',
-    description: '',
-    sellingPrice: undefined,
+
+  const initialValues: yup.Asserts<typeof ItemSchema> | undefined = {
+    id: item?.id,
+    code: item?.code ?? '',
+    categoryId: item?.categoryId,
+    name: item?.name ?? '',
+    description: item?.description ?? '',
+    sellingPrice: item?.sellingPrice,
   }
 
   return (
-    <Modal {...rest} initialFocusRef={initialFocusRef}>
+    <Modal {...rest} initialFocusRef={initialFocusRef} onClose={() => onClose(undefined)}>
       <ModalOverlay/>
       <ModalContent>
         <Formik
           initialValues={initialValues}
           validationSchema={ItemSchema}
           onSubmit={async (values, {setSubmitting}) => {
-            window.alert(JSON.stringify(values))
+            const itemCast = ItemSchema.cast(values)
+            window.alert(JSON.stringify(itemCast, null, 2))
+            onClose(itemCast)
             setSubmitting(false)
           }}
         >
           {({ errors }) => (
             <Form>
               <ModalHeader>
-                {title || 'Item Editor'}
+                {mode === EditorModeEnum.insert ? 'New Item' : 'Edit Item'}
               </ModalHeader>
               <ModalCloseButton/>
               <ModalBody>
