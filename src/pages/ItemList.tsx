@@ -8,10 +8,13 @@ import {
 } from '@chakra-ui/react'
 import * as yup from 'yup'
 import { Formik, Field, Form, FieldProps } from 'formik'
-import Navbar from '../components/Navbar'
 import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
 
+const ItemCategorySchema = yup.object({
+  id: yup.number().integer().required(),
+  name: yup.string().max(100).required(),
+})
 
 const ItemSchema = yup.object({
   id: yup.number().nullable(),
@@ -20,12 +23,10 @@ const ItemSchema = yup.object({
   name: yup.string().max(100).required('Nama harus diisi'),
   description: yup.string().nullable(),
   sellingPrice: yup.number(),
+  category: ItemCategorySchema.nullable(),
 })
 
-const ItemCategoriesSchema = yup.array().of(yup.object({
-  id: yup.number().integer().required(),
-  name: yup.string().max(100).required(),
-})).ensure()
+const ItemCategoriesSchema = yup.array().of(ItemCategorySchema).ensure()
 
 enum EditorModeEnum {
   insert,
@@ -37,6 +38,11 @@ function ItemListPage() {
   const [ editorMode, setEditorMode ] = useState<EditorModeEnum>(EditorModeEnum.insert)
   const [ items, setItems ] = useState<Array<yup.TypeOf<typeof ItemSchema>>>([])
   const [ itemToEdit, setItemToEdit ] = useState<yup.TypeOf<typeof ItemSchema> | undefined>()
+  const { getJson } = useAuthContext()
+
+  useEffect(() => {
+
+  }, [])
 
   const handleClose = (item?: yup.TypeOf<typeof ItemSchema>): void => {
     if (!!item) {
@@ -50,7 +56,7 @@ function ItemListPage() {
   }
 
   return (
-    <Navbar title="Items">
+    <>
       <Heading>Items</Heading>
       <List>
         {items.map(item => (
@@ -84,7 +90,7 @@ function ItemListPage() {
         New Item
       </Button>
       <ItemEditorDialog item={itemToEdit} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
-    </Navbar>
+    </>
   )
 }
 

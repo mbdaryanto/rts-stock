@@ -18,5 +18,7 @@ class ItemModel(BaseModel):
     description: Optional[str]
     sellingPrice: Optional[Decimal] = None
 
+    category: Optional[ItemCategoryModel] = None
+
     class Config:
         orm_mode = True

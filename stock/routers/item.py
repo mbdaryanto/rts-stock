@@ -33,8 +33,20 @@ async def get_item_list(
     offset: int = 0,
     session: Session = Depends(get_session),
 ):
+    condition = or_(
+        Item.code.contains(q),
+        Item.name.contains(q),
+        Item.description.contains(q),
+        ItemCategory.name.contains(q),
+    )
     result = session.execute(
-        select(Item).limit(limit).offset(offset)
+        select(
+            Item, ItemCategory
+        ).outerjoin(
+            Item.category
+        ).where(
+            condition
+        ).limit(limit).offset(offset)
     ).scalars().all()
 
     return parse_obj_as(List[ItemModel], result)

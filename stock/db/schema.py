@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, Text, ForeignKey, UniqueConstraint, Index
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.schema import MetaData
 
@@ -28,6 +28,8 @@ class Item(Base):
     description = Column(Text)
     sellingPrice = Column(Numeric(20, 0))
 
+    category = relationship('ItemCategory', backref='item_collection')
+
     UniqueConstraint(code)
 
 
@@ -39,5 +41,7 @@ class ItemJournal(Base):
     quantity = Column(Numeric(20, 2), nullable=False)
     journalType = Column(Enum('Initial Stock', 'Buy', 'Sell', 'Correction', 'Ending Balance'), nullable=False)
     refCode = Column(String(100))
+
+    item = relationship('Item', backref='itemjournal_collection')
 
     Index('Idx_itemId_date', itemId, date)
