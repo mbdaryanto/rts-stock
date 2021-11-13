@@ -12,7 +12,13 @@ interface TokenType {
 export interface ItemType {
   id: number
   code: string
+  categoryId: number
+  category: {
+    id: number
+    name: string
+  }
   name: string
+  description: string
   sellingPrice: number
 }
 
@@ -20,7 +26,7 @@ export interface ApiContextType {
   getJson: <T=any>(path: string, query?: URLSearchParams | Dictionary) => Promise<T>
   postJson: <T=any>(path: string, body: any) => Promise<T>
   postFormData: <T=any>(path: string, formData: URLSearchParams | Dictionary) => Promise<T>
-  login: (username: string, password: string) => Promise<string>
+  login: (username: string, password: string) => Promise<TokenType>
   getItems: () => Promise<Array<ItemType>>
 }
 
@@ -123,9 +129,8 @@ export function createApiContext(accessToken?: string): ApiContextType {
     getJson,
     postJson,
     postFormData,
-    login: async (username: string, password: string): Promise<string> => {
-      const response = await postFormData<TokenType>('/token/login', {username, password})
-      return response.access_token
+    login: async (username: string, password: string): Promise<TokenType> => {
+      return await postFormData<TokenType>('/token/login', {username, password})
     },
     getItems: async (): Promise<Array<ItemType>> => {
       return await getJson<Array<ItemType>>('/item/list')

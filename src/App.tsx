@@ -8,8 +8,8 @@ import ItemListPage from './pages/ItemList'
 const App = () => (
   <ChakraProvider>
     <AuthProvider>
-      <Navbar title="Stock App">
-        <Router>
+      <Router>
+        <Navbar title="Stock App">
           <Switch>
             <Route path="/login">
               Login Page
@@ -30,8 +30,8 @@ const App = () => (
               Test
             </Route>
           </Switch>
-        </Router>
-      </Navbar>
+        </Navbar>
+      </Router>
     </AuthProvider>
   </ChakraProvider>
 )

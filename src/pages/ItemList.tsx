@@ -38,11 +38,13 @@ function ItemListPage() {
   const [ editorMode, setEditorMode ] = useState<EditorModeEnum>(EditorModeEnum.insert)
   const [ items, setItems ] = useState<Array<yup.TypeOf<typeof ItemSchema>>>([])
   const [ itemToEdit, setItemToEdit ] = useState<yup.TypeOf<typeof ItemSchema> | undefined>()
-  const { getJson } = useAuthContext()
+  const { getItems } = useAuthContext()
 
   useEffect(() => {
-
-  }, [])
+    getItems().then(
+      response => setItems(response)
+    )
+  }, [getItems])
 
   const handleClose = (item?: yup.TypeOf<typeof ItemSchema>): void => {
     if (!!item) {
@@ -115,7 +117,7 @@ function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProp
   }, [getJson])
 
 
-  const initialValues: yup.Asserts<typeof ItemSchema> | undefined = {
+  const initialValues: Partial<yup.Asserts<typeof ItemSchema>> | undefined = {
     id: item?.id,
     code: item?.code ?? '',
     categoryId: item?.categoryId,

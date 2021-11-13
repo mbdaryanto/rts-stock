@@ -1,6 +1,7 @@
-import { useState, createContext, ReactNode, useContext } from 'react'
+import { useState, createContext, ReactNode, useContext, useEffect } from 'react'
 import { object, string, number } from 'yup'
-import { isString, forEach, toString } from 'lodash'
+import { isString } from 'lodash'
+import { ApiContextType, createApiContext } from './api'
 
 
 export interface ParsedAccessToken {
@@ -9,34 +10,26 @@ export interface ParsedAccessToken {
   exp: number;
 }
 
-interface TokenType {
-  access_token: string;
-  token_type: string;
-}
-
 export interface AuthStateType extends Partial<ParsedAccessToken> {
   isAuthenticated: boolean;
   access_token?: string;
 }
 
-interface AuthContextType {
+interface AuthContextType extends Omit<ApiContextType, 'login'> {
   auth: AuthStateType;
   setAuthState: (value: AuthStateType) => void;
   setAccessToken: (accessToken?: string) => void;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  getJson: <T = any>(path: string, params?: {[key: string]: string | number}) => Promise<T>;
-  postJson: <T = any>(path: string, body: any) => Promise<T>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
+  ...createApiContext(),
   auth: { isAuthenticated: false },
   setAuthState: () => {},
   setAccessToken: () => {},
   login: async () => {},
   logout: () => {},
-  getJson: async function<T = any>() {return {} as T},
-  postJson: async function<T = any>() {return {} as T},
 });
 
 export const useAuthContext = () => useContext(AuthContext);
@@ -79,6 +72,12 @@ export function AuthProvider({
   children: ReactNode
 }) {
   const [auth, setAuthState] = useState<AuthStateType>({ isAuthenticated: false });
+  const [api, setApi] = useState<ApiContextType>(() => createApiContext(auth.access_token))
+
+  useEffect(() => {
+    setApi(createApiContext(auth.access_token))
+  }, [auth])
+
   const setAccessToken = (accessToken?: string) => {
     if (!accessToken) {
       setAuthState({ isAuthenticated: false });
@@ -96,30 +95,32 @@ export function AuthProvider({
       }
     }
   };
+
   const login = async (username: string, password: string) => {
-    const formData = new URLSearchParams();
-    formData.append('username', username);
-    formData.append('password', password);
+    const responseJson = await api.login(username, password)
+    // const formData = new URLSearchParams();
+    // formData.append('username', username);
+    // formData.append('password', password);
 
-    const response = await fetch("/token/login", {
-      body: formData.toString(),
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+    // const response = await fetch("/token/login", {
+    //   body: formData.toString(),
+    //   method: 'POST',
+    //   headers: {
+    //     'Accept': 'application/json',
+    //     'Content-Type': 'application/x-www-form-urlencoded',
+    //   },
+    // });
 
-    if (response.status === 401) {
-      const responseJson = await response.json();
-      throw new LoginError(responseJson.detail, response.status, response.statusText);
-    }
+    // if (response.status === 401) {
+    //   const responseJson = await response.json();
+    //   throw new LoginError(responseJson.detail, response.status, response.statusText);
+    // }
 
-    if (response.status !== 200) {
-      throw new LoginError("Invalid login response", response.status, response.statusText);
-    }
+    // if (response.status !== 200) {
+    //   throw new LoginError("Invalid login response", response.status, response.statusText);
+    // }
 
-    const responseJson = await response.json() as TokenType;
+    // const responseJson = await response.json() as TokenType;
 
     if (!responseJson.access_token || !isString(responseJson.access_token)) {
       throw new Error("Invalid login response");
@@ -130,102 +131,8 @@ export function AuthProvider({
 
   const logout = () => setAuthState({ isAuthenticated: false });
 
-  async function getJson<T = any>(path: string, params?: {[key: string]: string | number}): Promise<T> {
-
-    let requestOptions: RequestInit = {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    }
-
-    if (auth.isAuthenticated && auth.access_token) {
-      requestOptions.headers = {
-        ...requestOptions.headers,
-        'Authorization': `Bearer ${auth.access_token}`
-      }
-    }
-
-    // if (!auth.isAuthenticated || !auth.access_token) {
-    //   throw Error('User is not authenticated')
-    // }
-
-    const url = new window.URL(path, window.location.href)
-    if (!!params) {
-      forEach(params, (value, key) => url.searchParams.append(key, toString(value)))
-    }
-
-    console.log(`fetch ${url.href}...`)
-
-    const response = await fetch(url.href, requestOptions)
-
-    if (response.headers.get('Content-Type') !== 'application/json') {
-      throw Error('Error response type is not json')
-    }
-
-    const result = await response.json()
-
-    if (response.status === 401) {
-      // need to login
-      logout()
-      console.log(result)
-      throw Error(result.detail)
-    }
-
-    if (response.status !== 200) {
-      console.log(response.statusText, response.status, result)
-      throw Error('Error response')
-    }
-
-    return result as T
-  }
-
-  async function postJson<T = any>(path: string, body: any): Promise<T> {
-    let requestOptions: RequestInit = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    }
-
-    if (auth.isAuthenticated && auth.access_token) {
-      requestOptions.headers = {
-        ...requestOptions.headers,
-        'Authorization': `Bearer ${auth.access_token}`
-      }
-    }
-    // if (!auth.isAuthenticated || !auth.access_token) {
-    //   throw Error('User is not authenticated')
-    // }
-    console.log(`fetch ${path}...`)
-    const response = await fetch(path, requestOptions)
-
-    if (response.headers.get('Content-Type') !== 'application/json') {
-      throw Error('Error response type is not json')
-    }
-
-    const result = await response.json()
-
-    if (response.status === 401) {
-      // need to login
-      logout()
-      console.log(result)
-      throw Error(result.detail)
-    }
-
-    if (response.status !== 200) {
-      console.log(response.statusText, response.status, result)
-      throw Error('Error response')
-    }
-
-    return result as T
-  }
-
   return (
-    <AuthContext.Provider value={{ auth, setAuthState, setAccessToken, login, logout, getJson, postJson }}>
+    <AuthContext.Provider value={{ ...api, auth, setAuthState, setAccessToken, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
