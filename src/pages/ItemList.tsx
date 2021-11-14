@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react'
 import { useState, useEffect, useRef } from 'react'
 import {
-  Heading, List, ListItem, IconButton, Button, VStack,
+  Heading, List, ListItem, IconButton, Button, VStack, Box, HStack,
   FormControl, Input, FormLabel, FormErrorMessage, Textarea, Select,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton,
   useDisclosure, useToast
@@ -60,27 +60,63 @@ function ItemListPage() {
   return (
     <>
       <Heading>Items</Heading>
-      <List>
+      <List pt='8px' pb='8px' sx={{
+        '& > li': {
+          'padding': '4px',
+        },
+        '& > li ~ li': {
+          'borderTopWidth': '1px',
+          'borderTopColor': 'gray.300',
+        },
+        '& > li:nth-of-type(even)': {
+          bgColor: 'gray.100',
+        },
+        '& > li:hover': {
+          bgColor: 'blue.100',
+        },
+      }}>
         {items.map(item => (
           <ListItem key={item.id}>
-            <dl>
-              <dt>Kode</dt>
-              <dd>{item.code}</dd>
-              <dt>Nama</dt>
-              <dd>{item.name}</dd>
-              <dt>Kategori</dt>
-              <dd>{item.categoryId}</dd>
-              <dt>Deskripsi</dt>
-              <dd>{item.description}</dd>
-              <dt>Harga Jual</dt>
-              <dd>{item.sellingPrice}</dd>
-            </dl>
-            <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
-              setEditorMode(EditorModeEnum.update)
-              setItemToEdit(item)
-              onOpen()
-            }}/>
-            <IconButton aria-label="Delete" icon={<FaTrash/>}/>
+            <Box as="dl" sx={{
+              '& dt': {
+                textTransform: 'uppercase',
+                fontSize: 'xs',
+                color: 'gray.500',
+              },
+              '& dd': {
+                fontSize: 'sm',
+              },
+            }}>
+              <HStack spacing={5}>
+                <Box>
+                  <dt>Kode</dt>
+                  <dd>{item.code}</dd>
+                </Box>
+                <Box>
+                  <dt>Nama</dt>
+                  <dd>{item.name}</dd>
+                </Box>
+                <Box>
+                  <dt>Kategori</dt>
+                  <dd>{item.category?.name}</dd>
+                </Box>
+                <Box>
+                  <dt>Deskripsi</dt>
+                  <dd>{item.description}</dd>
+                </Box>
+                <Box>
+                  <dt>Harga Jual</dt>
+                  <dd>{item.sellingPrice}</dd>
+                </Box>
+                <Box flexGrow={1}/>
+                <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
+                  setEditorMode(EditorModeEnum.update)
+                  setItemToEdit(item)
+                  onOpen()
+                }} variant="ghost" size="sm"/>
+                <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
+              </HStack>
+            </Box>
           </ListItem>
         ))}
       </List>
@@ -88,7 +124,7 @@ function ItemListPage() {
         setEditorMode(EditorModeEnum.insert)
         setItemToEdit(undefined)
         onOpen()
-      }}>
+      }} size="sm">
         New Item
       </Button>
       <ItemEditorDialog item={itemToEdit} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
@@ -124,6 +160,10 @@ function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProp
     name: item?.name ?? '',
     description: item?.description ?? '',
     sellingPrice: item?.sellingPrice,
+    category: !!item ? {
+      id: item.category!.id!,
+      name: item.category!.name!,
+     } : null,
   }
 
   return (

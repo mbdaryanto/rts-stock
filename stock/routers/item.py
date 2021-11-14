@@ -57,7 +57,13 @@ async def get_item_by_id(
     session: Session = Depends(get_session),
 ):
     return session.execute(
-        select(Item).where(Item.id == item_id)
+        select(
+            Item, ItemCategory
+        ).outerjoin(
+            Item.category
+        ).where(
+            Item.id == item_id
+        )
     ).scalars().one()
 
 class SaveResponse(BaseModel):
