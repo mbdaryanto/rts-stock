@@ -13,6 +13,7 @@ router = APIRouter(
     tags=['item'],
 )
 
+
 @router.get('/category/list', response_model=List[ItemCategoryModel])
 async def get_item_category_list(
     q: str = '',
@@ -25,6 +26,7 @@ async def get_item_category_list(
     ).scalars().all()
 
     return result
+
 
 @router.get('/list', response_model=List[ItemModel])
 async def get_item_list(
@@ -51,6 +53,7 @@ async def get_item_list(
 
     return parse_obj_as(List[ItemModel], result)
 
+
 @router.post('/get/{item_id}', response_model=ItemModel)
 async def get_item_by_id(
     item_id: int,
@@ -66,10 +69,12 @@ async def get_item_by_id(
         )
     ).scalars().one()
 
+
 class SaveResponse(BaseModel):
     success: bool = True
     error: Optional[str] = None
     item: Optional[ItemModel] = None
+
 
 @router.post('/save', response_model=SaveResponse)
 async def save_item(

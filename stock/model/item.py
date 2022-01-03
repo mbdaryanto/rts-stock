@@ -10,6 +10,7 @@ class ItemCategoryModel(BaseModel):
     class Config:
         orm_mode = True
 
+
 class ItemModel(BaseModel):
     id: Optional[int] = None
     code: constr(max_length=50)

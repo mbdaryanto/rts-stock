@@ -1,3 +1,4 @@
+from typing import Optional
 from functools import lru_cache
 from os import makedirs
 from os.path import dirname, abspath, join, exists
@@ -5,7 +6,10 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    sqlite: str = 'stock.db'
+    secret_key: Optional[str] = None
+    db: str = 'localhost/db'
+    user: str = 'user'
+    password: str = ''
 
     def get_db_url(self) -> str:
         default_storage_dir = join(
@@ -24,6 +28,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = join(dirname(abspath(__file__)), '.env')
+
 
 @lru_cache()
 def get_settings():

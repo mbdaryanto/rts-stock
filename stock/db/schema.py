@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, Text, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, Text, ForeignKey, UniqueConstraint, Index, MetaData
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy.sql.expression import null
-from sqlalchemy.sql.schema import MetaData
+
 
 convention = {
     "ix": "Idx_%(column_0_label)s",
