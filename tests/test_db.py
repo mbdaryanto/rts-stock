@@ -7,6 +7,7 @@ from stock.settings import get_settings
 from stock.db.connection import engine
 from stock.db import schema
 
+
 def test_settings():
     settings = get_settings()
     print(settings.get_db_url())

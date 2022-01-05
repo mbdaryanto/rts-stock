@@ -1,12 +1,18 @@
 from os.path import join, dirname, abspath
 from collections import OrderedDict
-from secrets import token_hex
+from secrets import choice, token_hex
 from binascii import unhexlify
 from cryptography.fernet import Fernet
 from base64 import urlsafe_b64encode, urlsafe_b64decode
-from rich.prompt import Prompt
+from rich.prompt import IntPrompt, Prompt
 from rich.console import Console
 from .settings import get_settings
+
+
+DRIVERS = [
+    'mysql',
+    'sqlite',
+]
 
 
 def create_config():
@@ -24,17 +30,35 @@ def create_config():
     fernet = Fernet(key)
 
     console.print('Setting database connection')
-    values['DB'] = Prompt.ask('host:port/db', default=settings.db)
-    values['USER'] = Prompt.ask('user', default=settings.user)
-    values['PASSWORD'] = encrypt(
-        fernet,
-        Prompt.ask(
-            'password',
-            default=decrypt(fernet, settings.password),
-            show_default=False,
-            password=True
-        )
+
+    # console.print('[bold]Database Drivers[/bold]')
+    # for index, driver in enumerate(DRIVERS):
+    #     if settings.driver == driver:
+    #         console.print('[italic]{}. {}[/italic]'.format(index, driver))
+    #     else:
+    #         console.print('{}. {}'.format(index, driver))
+
+    values['DRIVER'] = Prompt.ask(
+        'Select db driver',
+        console=console,
+        choices=DRIVERS,
+        default=settings.driver,
     )
+    if values['DRIVER'] == 'sqlite':
+        values['DB'] = Prompt.ask('filename', console=console, default=settings.db)
+    else:
+        values['DB'] = Prompt.ask('host:port/db', console=console, default=settings.db)
+        values['DB_USER'] = Prompt.ask('user', console=console, default=settings.db_user)
+        values['DB_PASSWORD'] = encrypt(
+            fernet,
+            Prompt.ask(
+                'password',
+                console=console,
+                default='' if not settings.db_password else decrypt(fernet, settings.db_password),
+                show_default=False,
+                password=True
+            )
+        )
 
     env_file = join(dirname(abspath(__file__)), '.env')
     print('Create settings and save to: {}'.format(env_file))
