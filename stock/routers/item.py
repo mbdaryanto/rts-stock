@@ -14,6 +14,13 @@ router = APIRouter(
 )
 
 
+class SaveResponse(BaseModel):
+    success: bool = True
+    error: Optional[str] = None
+    item: Optional[ItemModel] = None
+    itemCategory: Optional[ItemCategoryModel] = None
+
+
 @router.get('/category/list', response_model=List[ItemCategoryModel])
 async def get_item_category_list(
     q: str = '',
@@ -26,6 +33,36 @@ async def get_item_category_list(
     ).scalars().all()
 
     return result
+
+
+@router.post('/category/save', response_model=SaveResponse)
+async def save_item_category(
+    itemCategory: ItemCategoryModel,
+    session: Session = Depends(get_session),
+):
+    try:
+        if itemCategory.id is not None:
+            result = session.execute(
+                update(ItemCategory).where(
+                    ItemCategory.id == itemCategory.id
+                ).values(
+                    **itemCategory.dict(exclude={'id'})
+                )
+            )
+            assert result.rowcount == 1, 'Error item category not found'
+            session.commit()
+            saved_item_category = itemCategory
+        else:
+            new_item_category = ItemCategory(**itemCategory.dict(exclude={'id'}))
+            session.add(new_item_category)
+            session.commit()
+            saved_item_category = ItemCategoryModel.from_orm(new_item_category)
+
+        return SaveResponse(itemCategory=saved_item_category)
+
+    except Exception as ex:
+        session.rollback()
+        return SaveResponse(success=False, error=str(ex))
 
 
 @router.get('/list', response_model=List[ItemModel])
@@ -70,12 +107,6 @@ async def get_item_by_id(
     ).scalars().one()
 
 
-class SaveResponse(BaseModel):
-    success: bool = True
-    error: Optional[str] = None
-    item: Optional[ItemModel] = None
-
-
 @router.post('/save', response_model=SaveResponse)
 async def save_item(
     item: ItemModel,
@@ -91,13 +122,14 @@ async def save_item(
                 )
             )
             assert result.rowcount == 1, 'Error item not found'
+            session.commit()
             saved_item = item
         else:
             new_item = Item(**item.dict())
             session.add(new_item)
+            session.commit()
             saved_item = ItemModel.from_orm(new_item)
 
-        session.commit()
         return SaveResponse(item=saved_item)
 
     except Exception as ex:

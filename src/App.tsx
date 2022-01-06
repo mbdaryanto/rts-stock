@@ -4,6 +4,7 @@ import { HashRouter as Router, Switch, Route, Redirect } from 'react-router-dom'
 import { AuthProvider, useAuthContext } from './components/auth'
 import Navbar from './components/Navbar'
 import ItemListPage from './pages/ItemList'
+import ItemCategoryPage from './pages/ItemCategory'
 
 const App = () => (
   <ChakraProvider>
@@ -19,6 +20,9 @@ const App = () => (
             </Route>
             <Route path="/items">
               <ItemListPage/>
+            </Route>
+            <Route path="/item-categories">
+              <ItemCategoryPage/>
             </Route>
             <PrivateRoute path="/kartu-stok">
               Kartu Stok

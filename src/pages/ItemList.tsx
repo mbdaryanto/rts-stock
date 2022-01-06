@@ -4,29 +4,14 @@ import {
   Heading, List, ListItem, IconButton, Button, VStack, Box, HStack,
   FormControl, Input, FormLabel, FormErrorMessage, Textarea, Select,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton,
-  useDisclosure, useToast
+  useDisclosure, useToast, CircularProgress, Center
 } from '@chakra-ui/react'
 import * as yup from 'yup'
 import { Formik, Field, Form, FieldProps } from 'formik'
 import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
+import { ItemSchema, ItemCategoriesSchema } from '../schema/Item'
 
-const ItemCategorySchema = yup.object({
-  id: yup.number().integer().required(),
-  name: yup.string().max(100).required(),
-})
-
-const ItemSchema = yup.object({
-  id: yup.number().nullable(),
-  code: yup.string().max(50).required('Kode harus diisi'),
-  categoryId: yup.number().integer(),
-  name: yup.string().max(100).required('Nama harus diisi'),
-  description: yup.string().nullable(),
-  sellingPrice: yup.number(),
-  category: ItemCategorySchema.nullable(),
-})
-
-const ItemCategoriesSchema = yup.array().of(ItemCategorySchema).ensure()
 
 enum EditorModeEnum {
   insert,
@@ -34,6 +19,7 @@ enum EditorModeEnum {
 }
 
 function ItemListPage() {
+  const [isLoading, setLoading] = useState(false)
   const { isOpen, onClose, onOpen } = useDisclosure()
   const [ editorMode, setEditorMode ] = useState<EditorModeEnum>(EditorModeEnum.insert)
   const [ items, setItems ] = useState<Array<yup.TypeOf<typeof ItemSchema>>>([])
@@ -41,9 +27,14 @@ function ItemListPage() {
   const { getItems } = useAuthContext()
 
   useEffect(() => {
+    let pageIsMounted = true
+    setLoading(true)
     getItems().then(
-      response => setItems(response)
-    )
+      response => pageIsMounted && setItems(response)
+    ).finally(() => pageIsMounted && setLoading(false))
+    return () => {
+      pageIsMounted = false
+    }
   }, [getItems])
 
   const handleClose = (item?: yup.TypeOf<typeof ItemSchema>): void => {
@@ -60,74 +51,82 @@ function ItemListPage() {
   return (
     <>
       <Heading>Items</Heading>
-      <List pt='8px' pb='8px' sx={{
-        '& > li': {
-          'padding': '4px',
-        },
-        '& > li ~ li': {
-          'borderTopWidth': '1px',
-          'borderTopColor': 'gray.300',
-        },
-        '& > li:nth-of-type(even)': {
-          bgColor: 'gray.100',
-        },
-        '& > li:hover': {
-          bgColor: 'blue.100',
-        },
-      }}>
-        {items.map(item => (
-          <ListItem key={item.id}>
-            <Box as="dl" sx={{
-              '& dt': {
-                textTransform: 'uppercase',
-                fontSize: 'xs',
-                color: 'gray.500',
-              },
-              '& dd': {
-                fontSize: 'sm',
-              },
-            }}>
-              <HStack spacing={5}>
-                <Box>
-                  <dt>Kode</dt>
-                  <dd>{item.code}</dd>
-                </Box>
-                <Box>
-                  <dt>Nama</dt>
-                  <dd>{item.name}</dd>
-                </Box>
-                <Box>
-                  <dt>Kategori</dt>
-                  <dd>{item.category?.name}</dd>
-                </Box>
-                <Box>
-                  <dt>Deskripsi</dt>
-                  <dd>{item.description}</dd>
-                </Box>
-                <Box>
-                  <dt>Harga Jual</dt>
-                  <dd>{item.sellingPrice}</dd>
-                </Box>
-                <Box flexGrow={1}/>
-                <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
-                  setEditorMode(EditorModeEnum.update)
-                  setItemToEdit(item)
-                  onOpen()
-                }} variant="ghost" size="sm"/>
-                <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
-              </HStack>
-            </Box>
-          </ListItem>
-        ))}
-      </List>
-      <Button leftIcon={<FaPlus/>} onClick={() => {
-        setEditorMode(EditorModeEnum.insert)
-        setItemToEdit(undefined)
-        onOpen()
-      }} size="sm">
-        New Item
-      </Button>
-      <ItemEditorDialog item={itemToEdit} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
+      { isLoading ? (
+        <Center w="100%" h="200px">
+          <CircularProgress isIndeterminate/>
+        </Center>
+      ) : (
+        <>
+        <List pt='8px' pb='8px' sx={{
+          '& > li': {
+            'padding': '4px',
+          },
+          '& > li ~ li': {
+            'borderTopWidth': '1px',
+            'borderTopColor': 'gray.300',
+          },
+          '& > li:nth-of-type(even)': {
+            bgColor: 'gray.100',
+          },
+          '& > li:hover': {
+            bgColor: 'blue.100',
+          },
+        }}>
+          {items.map(item => (
+            <ListItem key={item.id}>
+              <Box as="dl" sx={{
+                '& dt': {
+                  textTransform: 'uppercase',
+                  fontSize: 'xs',
+                  color: 'gray.500',
+                },
+                '& dd': {
+                  fontSize: 'sm',
+                },
+              }}>
+                <HStack spacing={5}>
+                  <Box>
+                    <dt>Kode</dt>
+                    <dd>{item.code}</dd>
+                  </Box>
+                  <Box>
+                    <dt>Nama</dt>
+                    <dd>{item.name}</dd>
+                  </Box>
+                  <Box>
+                    <dt>Kategori</dt>
+                    <dd>{item.category?.name}</dd>
+                  </Box>
+                  <Box>
+                    <dt>Deskripsi</dt>
+                    <dd>{item.description}</dd>
+                  </Box>
+                  <Box>
+                    <dt>Harga Jual</dt>
+                    <dd>{item.sellingPrice}</dd>
+                  </Box>
+                  <Box flexGrow={1}/>
+                  <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
+                    setEditorMode(EditorModeEnum.update)
+                    setItemToEdit(item)
+                    onOpen()
+                  }} variant="ghost" size="sm"/>
+                  <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
+                </HStack>
+              </Box>
+            </ListItem>
+          ))}
+        </List>
+        <Button leftIcon={<FaPlus/>} onClick={() => {
+          setEditorMode(EditorModeEnum.insert)
+          setItemToEdit(undefined)
+          onOpen()
+        }} size="sm">
+          New Item
+        </Button>
+        <ItemEditorDialog item={itemToEdit} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
+        </>
+      )}
     </>
   )
 }

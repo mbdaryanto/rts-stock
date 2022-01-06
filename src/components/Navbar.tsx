@@ -3,7 +3,7 @@ import {
   Box, HStack, Button, Text, IconButton,
   Menu, MenuButton, MenuList, MenuItem, MenuDivider,
 } from '@chakra-ui/react'
-import { Link, NavLink, useRouteMatch } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuthContext } from './auth'
 
 import { FaHome, FaUserCircle } from 'react-icons/fa'
@@ -35,7 +35,7 @@ function Navbar({ title, children }: {
   }, [])
 
   const { auth, logout } = useAuthContext()
-  const { path } = useRouteMatch()
+  const location = useLocation()
 
   const containerProps: ComponentProps<typeof Box> = {
     w: { base: "100%", md: "42em", lg: "56em" },
@@ -47,23 +47,28 @@ function Navbar({ title, children }: {
     variant: 'ghost',
     size: 'sm',
     colorScheme: 'teal',
+    // sx: {
+    //   '&.active': {
+    //     backgroundColor: 'gray.200'
+    //   }
+    // }
   }
 
   const getNavProps = (to: string): ComponentProps<typeof Button> => ({
     ...navbarButtonProps,
-    variant: path === to ? 'solid' : 'ghost',
+    variant: location.pathname === to ? 'solid' : 'ghost',
     'as': NavLink,
     to,
   })
 
   const getMenuItemProps = (to: string) : ComponentProps<typeof MenuItem> => ({
-    borderLeftWidth: path === to ? '3px' : undefined,
-    borderLeftStyle: path === to ? 'inset' : undefined,
-    borderLeftColor: path === to ? 'teal' : undefined,
-    borderRightWidth: path === to ? '3px' : undefined,
-    borderRightStyle: path === to ? 'inset' : undefined,
-    borderRightColor: path === to ? 'teal' : undefined,
-    backgroundColor: path === to ? 'teal.50' : undefined,
+    borderLeftWidth: location.pathname === to ? '3px' : undefined,
+    borderLeftStyle: location.pathname === to ? 'inset' : undefined,
+    borderLeftColor: location.pathname === to ? 'teal' : undefined,
+    borderRightWidth: location.pathname === to ? '3px' : undefined,
+    borderRightStyle: location.pathname === to ? 'inset' : undefined,
+    borderRightColor: location.pathname === to ? 'teal' : undefined,
+    backgroundColor: location.pathname === to ? 'teal.50' : undefined,
     'as': NavLink,
     to,
   })
@@ -90,6 +95,9 @@ function Navbar({ title, children }: {
               <MenuItem {...getMenuItemProps("/")}>
                 Home
               </MenuItem>
+              <MenuItem {...getMenuItemProps("/item-categories")}>
+                Categories
+              </MenuItem>
               <MenuItem {...getMenuItemProps("/items")}>
                 Items
               </MenuItem>
@@ -115,6 +123,7 @@ function Navbar({ title, children }: {
         </HStack>
         <HStack spacing={5} display={{ base: "none", md: "flex" }} {...containerProps}>
           <Button {...getNavProps("/")}><FaHome/></Button>
+          <Button {...getNavProps("/item-categories")}>Categories</Button>
           <Button {...getNavProps("/items")}>Items</Button>
           <Button {...getNavProps("/kartu-stok")}>Kartu Stok</Button>
           <Button {...getNavProps("/ringkasan-stok")}>Ringkasan Stok</Button>
