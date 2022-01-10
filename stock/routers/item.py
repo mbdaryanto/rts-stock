@@ -28,8 +28,29 @@ async def get_item_category_list(
     offset: int = 0,
     session: Session = Depends(get_session),
 ):
+    if q:
+        keywords = q.split(' ')
+        conditions = [
+            or_(
+                Item.Kode.contains(keyword),
+                Item.Nama.contains(keyword),
+                Item.Barcode.contains(keyword),
+                Item.Singkatan.contains(keyword),
+                Item.Satuan.contains(keyword),
+            )
+            for keyword in keywords if len(keyword) > 0
+        ]
+    else:
+        conditions = []
+
     result = session.execute(
-        select(ItemCategory).limit(limit).offset(offset)
+        select(
+            ItemCategory
+        ).where(
+            and_(
+                *conditions
+            )
+        ).limit(limit).offset(offset)
     ).scalars().all()
 
     return result
@@ -72,19 +93,30 @@ async def get_item_list(
     offset: int = 0,
     session: Session = Depends(get_session),
 ):
-    condition = or_(
-        Item.code.contains(q),
-        Item.name.contains(q),
-        Item.description.contains(q),
-        ItemCategory.name.contains(q),
-    )
+    if q:
+        keywords = q.split(' ')
+        conditions = [
+            or_(
+                Item.Kode.contains(keyword),
+                Item.Nama.contains(keyword),
+                Item.Barcode.contains(keyword),
+                Item.Singkatan.contains(keyword),
+                Item.Satuan.contains(keyword),
+            )
+            for keyword in keywords if len(keyword) > 0
+        ]
+    else:
+        conditions = []
+
     result = session.execute(
         select(
             Item, ItemCategory
         ).outerjoin(
             Item.category
         ).where(
-            condition
+            and_(
+                *conditions
+            )
         ).limit(limit).offset(offset)
     ).scalars().all()
 
@@ -118,14 +150,20 @@ async def save_item(
                 update(Item).where(
                     Item.id == item.id
                 ).values(
-                    **item.dict(exclude={'id'})
+                    **item.dict(exclude={'id', 'category'})
                 )
             )
             assert result.rowcount == 1, 'Error item not found'
             session.commit()
-            saved_item = item
+            saved_item = ItemModel.from_orm(
+                session.execute(
+                    select(Item, ItemCategory).where(
+                        Item.id == item.id
+                    ).limit(1)
+                ).scalar_one_or_none()
+            )
         else:
-            new_item = Item(**item.dict())
+            new_item = Item(**item.dict(exclude={'id', 'category'}))
             session.add(new_item)
             session.commit()
             saved_item = ItemModel.from_orm(new_item)

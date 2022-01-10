@@ -1,4 +1,5 @@
 import { toString, toPairs } from 'lodash'
+import type { ItemType, ItemCategoryType, SaveResponseType } from '../schema/Item'
 
 interface Dictionary {
   [key: string]: string | number
@@ -9,25 +10,15 @@ interface TokenType {
   token_type: string
 }
 
-export interface ItemType {
-  id: number
-  code: string
-  categoryId: number
-  category: {
-    id: number
-    name: string
-  }
-  name: string
-  description: string
-  sellingPrice: number
-}
-
 export interface ApiContextType {
   getJson: <T=any>(path: string, query?: URLSearchParams | Dictionary) => Promise<T>
   postJson: <T=any>(path: string, body: any) => Promise<T>
   postFormData: <T=any>(path: string, formData: URLSearchParams | Dictionary) => Promise<T>
   login: (username: string, password: string) => Promise<TokenType>
   getItems: () => Promise<Array<ItemType>>
+  saveItem: (item: ItemType) => Promise<SaveResponseType>
+  getItemCategories: () => Promise<Array<ItemCategoryType>>
+  saveItemCategory: (itemCategory: ItemCategoryType) => Promise<SaveResponseType>
 }
 
 export function createApiContext(accessToken?: string): ApiContextType {
@@ -129,11 +120,10 @@ export function createApiContext(accessToken?: string): ApiContextType {
     getJson,
     postJson,
     postFormData,
-    login: async (username: string, password: string): Promise<TokenType> => {
-      return await postFormData<TokenType>('/token/login', {username, password})
-    },
-    getItems: async (): Promise<Array<ItemType>> => {
-      return await getJson<Array<ItemType>>('/item/list')
-    },
+    login: (username: string, password: string): Promise<TokenType> => postFormData<TokenType>('/token/login', {username, password}),
+    getItems: (query?: URLSearchParams | Dictionary) => getJson<Array<ItemType>>('/item/list', query),
+    saveItem: (item: ItemType) => postJson<SaveResponseType>('/item/save', item),
+    getItemCategories: (query?: URLSearchParams | Dictionary) => getJson<Array<ItemCategoryType>>('/item/category/list', query),
+    saveItemCategory: (itemCategory: ItemCategoryType) => postJson<SaveResponseType>('/item/category/save', itemCategory),
   }
 }

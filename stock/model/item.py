@@ -6,6 +6,8 @@ from pydantic import BaseModel, constr
 class ItemCategoryModel(BaseModel):
     id: Optional[int] = None
     name: constr(max_length=100)
+    description: Optional[str]
+    isActive: bool = True
 
     class Config:
         orm_mode = True
@@ -18,6 +20,7 @@ class ItemModel(BaseModel):
     name: constr(max_length=100)
     description: Optional[str]
     sellingPrice: Optional[Decimal] = None
+    isActive: bool = True
 
     category: Optional[ItemCategoryModel] = None
 

@@ -10,21 +10,17 @@ import * as yup from 'yup'
 import { Formik, Field, Form, FieldProps } from 'formik'
 import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
-import { ItemSchema, ItemCategoriesSchema } from '../schema/Item'
+import { ItemSchema, ItemType, ItemCategoriesSchema, ItemCategoryType } from '../schema/Item'
+import { EditorModeEnum } from './utils'
 
-
-enum EditorModeEnum {
-  insert,
-  update,
-}
 
 function ItemListPage() {
   const [isLoading, setLoading] = useState(false)
   const { isOpen, onClose, onOpen } = useDisclosure()
   const [ editorMode, setEditorMode ] = useState<EditorModeEnum>(EditorModeEnum.insert)
-  const [ items, setItems ] = useState<Array<yup.TypeOf<typeof ItemSchema>>>([])
-  const [ itemToEdit, setItemToEdit ] = useState<yup.TypeOf<typeof ItemSchema> | undefined>()
-  const { getItems } = useAuthContext()
+  const [ items, setItems ] = useState<Array<ItemType>>([])
+  const [ itemToEdit, setItemToEdit ] = useState<ItemType | undefined>()
+  const { getItems, saveItem } = useAuthContext()
 
   useEffect(() => {
     let pageIsMounted = true
@@ -37,12 +33,13 @@ function ItemListPage() {
     }
   }, [getItems])
 
-  const handleClose = (item?: yup.TypeOf<typeof ItemSchema>): void => {
+  const handleClose = async (item?: ItemType): Promise<void> => {
     if (!!item) {
+      const response = await saveItem(item)
       if (editorMode === EditorModeEnum.insert) {
-        setItems(oldValues => [...oldValues, item])
+        setItems(oldValues => [...oldValues, response.item!])
       } else {
-        setItems(oldValues => oldValues.map(value => value.id === item.id ? item : value))
+        setItems(oldValues => oldValues.map(value => value.id === item.id ? response.item! : value))
       }
     }
     onClose()
@@ -74,7 +71,8 @@ function ItemListPage() {
         }}>
           {items.map(item => (
             <ListItem key={item.id}>
-              <Box as="dl" sx={{
+
+              <HStack spacing={5} paddingX={2} align="start" sx={{
                 '& dt': {
                   textTransform: 'uppercase',
                   fontSize: 'xs',
@@ -84,36 +82,34 @@ function ItemListPage() {
                   fontSize: 'sm',
                 },
               }}>
-                <HStack spacing={5}>
-                  <Box>
-                    <dt>Kode</dt>
-                    <dd>{item.code}</dd>
-                  </Box>
-                  <Box>
-                    <dt>Nama</dt>
-                    <dd>{item.name}</dd>
-                  </Box>
-                  <Box>
-                    <dt>Kategori</dt>
-                    <dd>{item.category?.name}</dd>
-                  </Box>
-                  <Box>
-                    <dt>Deskripsi</dt>
-                    <dd>{item.description}</dd>
-                  </Box>
-                  <Box>
-                    <dt>Harga Jual</dt>
-                    <dd>{item.sellingPrice}</dd>
-                  </Box>
-                  <Box flexGrow={1}/>
-                  <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
-                    setEditorMode(EditorModeEnum.update)
-                    setItemToEdit(item)
-                    onOpen()
-                  }} variant="ghost" size="sm"/>
-                  <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
-                </HStack>
-              </Box>
+                <Box as="dl">
+                  <dt>Kode</dt>
+                  <dd>{item.code}</dd>
+                </Box>
+                <Box as="dl">
+                  <dt>Nama</dt>
+                  <dd>{item.name}</dd>
+                </Box>
+                <Box as="dl">
+                  <dt>Kategori</dt>
+                  <dd>{item.category?.name}</dd>
+                </Box>
+                <Box as="dl">
+                  <dt>Deskripsi</dt>
+                  <dd>{item.description}</dd>
+                </Box>
+                <Box as="dl">
+                  <dt>Harga Jual</dt>
+                  <dd>{item.sellingPrice}</dd>
+                </Box>
+                <Box flexGrow={1}/>
+                <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
+                  setEditorMode(EditorModeEnum.update)
+                  setItemToEdit(item)
+                  onOpen()
+                }} variant="ghost" size="sm"/>
+                <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
+              </HStack>
             </ListItem>
           ))}
         </List>
@@ -134,35 +130,33 @@ function ItemListPage() {
 interface ItemEditorDialogProps extends Omit<ComponentProps<typeof Modal>, 'children' | 'onClose'> {
   item?: yup.TypeOf<typeof ItemSchema>,
   mode: EditorModeEnum,
-  onClose: (item?: yup.TypeOf<typeof ItemSchema>) => void,
+  onClose: (item?: yup.TypeOf<typeof ItemSchema>) => Promise<void>,
 }
 
 function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProps) {
   const initialFocusRef = useRef(null)
   const [categories, setCategories] = useState<yup.TypeOf<typeof ItemCategoriesSchema>>([])
   const toast = useToast()
-  const { getJson } = useAuthContext()
+  const { getItemCategories } = useAuthContext()
 
   useEffect(() => {
-    getJson<yup.Asserts<typeof ItemCategoriesSchema>>('/item/category/list').then(
+    getItemCategories().then(
       response => setCategories(ItemCategoriesSchema.cast(response))
     ).catch(
       error => console.log(error)
     )
-  }, [getJson])
+  }, [getItemCategories])
 
 
-  const initialValues: Partial<yup.Asserts<typeof ItemSchema>> | undefined = {
+  const initialValues: Partial<yup.TypeOf<typeof ItemSchema>> | undefined = {
     id: item?.id,
     code: item?.code ?? '',
-    categoryId: item?.categoryId,
+    categoryId: item?.categoryId ?? 0,
     name: item?.name ?? '',
     description: item?.description ?? '',
     sellingPrice: item?.sellingPrice,
-    category: !!item ? {
-      id: item.category!.id!,
-      name: item.category!.name!,
-     } : null,
+    // category: item?.category,
+    isActive: item?.isActive ?? true,
   }
 
   return (
@@ -173,13 +167,14 @@ function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProp
           initialValues={initialValues}
           validationSchema={ItemSchema}
           onSubmit={async (values, {setSubmitting}) => {
+            values.category = undefined
             const itemCast = ItemSchema.cast(values)
-            window.alert(JSON.stringify(itemCast, null, 2))
-            onClose(itemCast)
+            // window.alert(JSON.stringify(itemCast, null, 2))
+            await onClose(itemCast)
             setSubmitting(false)
           }}
         >
-          {({ errors }) => (
+          {({ values , errors, setFieldValue }) => (
             <Form>
               <ModalHeader>
                 {mode === EditorModeEnum.insert ? 'New Item' : 'Edit Item'}
@@ -209,9 +204,13 @@ function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProp
 
                   <Field name="categoryId">
                     {({ field, meta }: FieldProps<string>) => (
-                      <FormControl isInvalid={!!meta.touched && !!meta.error}>
+                      <FormControl isInvalid={!!meta.touched && !!meta.error} isRequired>
                         <FormLabel htmlFor={field.name}>Kategori</FormLabel>
-                        <Select {...field} id={field.name}>
+                        <Select {...field} id={field.name} onChange={(ev) => {
+                          console.log(ev)
+                          field.onChange(ev)
+                        }}>
+                          <option value="">Pilih kategori</option>
                           {categories!.map((cat) => (
                             <option key={cat.id} value={`${cat.id}`}>{cat.name}</option>
                           ))}
@@ -245,10 +244,12 @@ function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProp
               <ModalFooter>
                 <Button leftIcon={<FaSave/>} type="submit" onClick={() => {
                   if (!!errors && Object.keys(errors).length > 0) {
+                    // alert(JSON.stringify(values))
+                    console.log(errors)
                     toast({
                       title: 'Perlu perbaikan input',
                       status: 'warning',
-                      description: Object.values(errors).join(', '),
+                      description: Object.values(errors).map(value => JSON.stringify(value)).join(', '),
                     })
                   }
                 }}>Save</Button>
