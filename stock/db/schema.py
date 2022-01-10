@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, Text, ForeignKey, UniqueConstraint, Index, MetaData
+from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, Boolean, Text, ForeignKey, UniqueConstraint, Index, MetaData
 from sqlalchemy.orm import declarative_base, relationship
 
 
@@ -16,6 +16,8 @@ class ItemCategory(Base):
     __tablename__ = 'mitemcategory'
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
+    description = Column(Text)
+    isActive = Column(Boolean, nullable=False, default=True, server_default='1')
 
 
 class Item(Base):
@@ -26,6 +28,7 @@ class Item(Base):
     name = Column(String(100))
     description = Column(Text)
     sellingPrice = Column(Numeric(20, 0))
+    isActive = Column(Boolean, nullable=False, default=True, server_default='1')
 
     category = relationship('ItemCategory', backref='item_collection')
 
@@ -38,6 +41,7 @@ class ItemJournal(Base):
     itemId = Column(Integer, ForeignKey(Item.id), nullable=False)
     date = Column(Date, nullable=False)
     quantity = Column(Numeric(20, 2), nullable=False)
+    value = Column(Numeric(20, 2))
     journalType = Column(Enum('Initial Stock', 'Buy', 'Sell', 'Correction', 'Ending Balance'), nullable=False)
     refCode = Column(String(100))
 
