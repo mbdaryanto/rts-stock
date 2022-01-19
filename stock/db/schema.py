@@ -35,6 +35,53 @@ class Item(Base):
     UniqueConstraint(code)
 
 
+class MarketPlace(Base):
+    __tablename__ = 'mmarketplace'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+    description = Column(Text)
+    isActive = Column(Boolean, nullable=False, default=True, server_default='1')
+
+
+class Sales(Base):
+    __tablename__ = 'tsales'
+    id = Column(Integer, primary_key=True)
+    code = Column(String(50), nullable=False)
+    marketPlaceId = Column(Integer, ForeignKey(MarketPlace.id))
+    date = Column(Date)
+
+    UniqueConstraint(code)
+    Index('Idx_date', date)
+
+
+class SalesD(Base):
+    __tablename__ = 'tsalesd'
+    id = Column(Integer, primary_key=True)
+    salesId = Column(Integer, ForeignKey(Sales.id, ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    itemId = Column(Integer, ForeignKey(Item.id), nullable=False)
+    quantity = Column(Numeric(20, 2), nullable=False)
+    unitPrice = Column(Numeric(20, 0))
+
+
+class Purchase(Base):
+    __tablename__ = 'tpurchase'
+    id = Column(Integer, primary_key=True)
+    code = Column(String(50), nullable=False)
+    date = Column(Date)
+
+    UniqueConstraint(code)
+    Index('Idx_date', date)
+
+
+class PurchaseD(Base):
+    __tablename__ = 'tpurchased'
+    id = Column(Integer, primary_key=True)
+    purchaseId = Column(Integer, ForeignKey(Purchase.id, ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    itemId = Column(Integer, ForeignKey(Item.id), nullable=False)
+    quantity = Column(Numeric(20, 2), nullable=False)
+    unitPrice = Column(Numeric(20, 0))
+
+
 class ItemJournal(Base):
     __tablename__ = 'titemjournal'
     id = Column(Integer, primary_key=True)
@@ -44,6 +91,8 @@ class ItemJournal(Base):
     value = Column(Numeric(20, 2))
     journalType = Column(Enum('Initial Stock', 'Buy', 'Sell', 'Correction', 'Ending Balance'), nullable=False)
     refCode = Column(String(100))
+    salesDId = Column(Integer, ForeignKey(SalesD.id, ondelete='CASCADE', onupdate='CASCADE'))
+    purchaseDId = Column(Integer, ForeignKey(PurchaseD.id, ondelete='CASCADE', onupdate='CASCADE'))
 
     item = relationship('Item', backref='itemjournal_collection')
 
