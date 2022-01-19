@@ -1,12 +1,6 @@
-from os.path import join, dirname, abspath
-from collections import OrderedDict
-from secrets import choice, token_hex
-from binascii import unhexlify
-from cryptography.fernet import Fernet
-from base64 import urlsafe_b64encode, urlsafe_b64decode
 from rich.prompt import IntPrompt, Prompt
 from rich.console import Console
-from .settings import get_settings
+from .settings import Settings
 
 
 DRIVERS = [
@@ -17,66 +11,42 @@ DRIVERS = [
 
 def create_config():
     console = Console()
-    settings = get_settings()
+    settings = Settings()
     console.print('Change Settings [old values], blank = keep old values')
-    values = OrderedDict()
 
-    if settings.secret_key:
-        values['SECRET_KEY'] = settings.secret_key
-    else:
-        values['SECRET_KEY'] = token_hex(32)
-
-    key = urlsafe_b64encode(unhexlify(values['SECRET_KEY']))
-    fernet = Fernet(key)
+    if not settings.secret_key:
+        settings.generate_secret_key()
 
     console.print('Setting database connection')
 
-    # console.print('[bold]Database Drivers[/bold]')
-    # for index, driver in enumerate(DRIVERS):
-    #     if settings.driver == driver:
-    #         console.print('[italic]{}. {}[/italic]'.format(index, driver))
-    #     else:
-    #         console.print('{}. {}'.format(index, driver))
-
-    values['DRIVER'] = Prompt.ask(
+    settings.db_driver = Prompt.ask(
         'Select db driver',
         console=console,
         choices=DRIVERS,
-        default=settings.driver,
+        default=settings.db_driver,
     )
-    if values['DRIVER'] == 'sqlite':
-        values['DB'] = Prompt.ask('filename', console=console, default=settings.db)
-    else:
-        values['DB'] = Prompt.ask('host:port/db', console=console, default=settings.db)
-        values['DB_USER'] = Prompt.ask('user', console=console, default=settings.db_user)
-        values['DB_PASSWORD'] = encrypt(
-            fernet,
+
+    if settings.db_driver == 'sqlite':
+        settings.db_database = Prompt.ask('filename', console=console, default=settings.db_database)
+    elif settings.db_driver == 'mysql':
+        settings.db_host = Prompt.ask('host', console=console, default=settings.db_database)
+        settings.db_port = IntPrompt.ask('port', console=console, default=settings.db_port)
+        settings.db_database = Prompt.ask('database', console=console, default=settings.db_database)
+        settings.db_user = Prompt.ask('user', console=console, default=settings.db_user)
+        settings.set_password(
             Prompt.ask(
                 'password',
                 console=console,
-                default='' if not settings.db_password else decrypt(fernet, settings.db_password),
+                default='' if not settings.db_password else settings.get_password(),
                 show_default=False,
-                password=True
+                password=True,
             )
         )
+    else:
+        raise Exception('Unknown db driver {}, supported driver: mysql, sqlite'.format(settings.db_driver))
 
-    env_file = join(dirname(abspath(__file__)), '.env')
-    print('Create settings and save to: {}'.format(env_file))
-
-    with open(env_file, "wt") as f:
-        for key, value in values.items():
-            print("{}={!r}".format(key, value), file=f)
-
-
-def encrypt(fernet: Fernet, plain_text: str) -> str:
-    cipher_text = fernet.encrypt(plain_text.encode('ascii'))
-    return urlsafe_b64encode(cipher_text).decode('ascii')
-
-
-def decrypt(fernet: Fernet, cipher_text: str) -> str:
-    decoded_cipher_text = urlsafe_b64decode(cipher_text)
-    plain_text = fernet.decrypt(decoded_cipher_text)
-    return plain_text.decode('ascii')
+    console.print('Create settings and save to: {}'.format(settings.Config.env_file))
+    settings.save()
 
 
 if __name__ == '__main__':

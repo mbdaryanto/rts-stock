@@ -1,69 +1,71 @@
 from typing import Optional
-from urllib.parse import quote_plus
+from pathlib import Path
 from functools import lru_cache
-from base64 import urlsafe_b64encode, urlsafe_b64decode
-from binascii import unhexlify
-from os import makedirs
-from os.path import dirname, abspath, join, exists
 from pydantic import BaseSettings
-from sqlalchemy.engine import URL, make_url
 from cryptography.fernet import Fernet
+from sqlalchemy.engine import URL
 
 
 class Settings(BaseSettings):
     secret_key: Optional[str] = None
-    driver: str = 'mysql'
-    db: str = 'localhost/db'
-    db_user: Optional[str] = 'user'
-    db_password: Optional[str] = ''
-
-    def get_db_url(self) -> URL:
-        kwargs = {}
-
-        if self.driver == 'mysql':
-            drivername = 'mysql+mysqlconnector'
-            server, kwargs['database'] = self.db.split('/')
-            server_port = server.split(':')
-            if len(server_port) == 0:
-                raise ValueError('DB tidak sesuai dengan format host:port/database {!r}'.format(self.db))
-
-            kwargs['host'] = server_port[0]
-            if len(server_port) == 2:
-                kwargs['port'] = int(server_port[1])
-
-            kwargs['username'] = self.db_user
-            if self.db_password:
-                kwargs['password'] = decrypt(self.secret_key, self.db_password)
-
-        elif self.driver == 'sqlite':
-            default_storage_dir = join(
-                dirname(dirname(abspath(__file__))),
-                'storage',
-            )
-            filename = join(
-                default_storage_dir,
-                self.db
-            )
-            if not exists(filename):
-                makedirs(default_storage_dir, exist_ok=True)
-                with open(filename, "wb") as f:
-                    pass
-
-            return make_url('sqlite:///{}'.format(filename))
-        else:
-            raise Exception('unknown driver {}'.format(self.driver))
-
-        return URL.create(drivername, **kwargs)
+    db_driver: str = 'mysql'
+    db_host: str = 'localhost'
+    db_port: int = 3306
+    db_database: str = 'test'
+    db_user: str = 'user'
+    db_password: Optional[str] = None
 
     class Config:
-        env_file = join(dirname(abspath(__file__)), '.env')
+        env_file = str(Path(__file__).parent.parent / '.env')
 
+    def save(self) -> None:
+        with open(self.Config.env_file, 'wt') as out:
+            for key, value in self.dict().items():
+                out.write('{}={!r}\n'.format(key.upper(), value))
 
-def decrypt(secret_key: str, cipher_text: str) -> str:
-    decoded_cipher_text = urlsafe_b64decode(cipher_text)
-    fernet = Fernet(urlsafe_b64encode(unhexlify(secret_key)))
-    plain_text = fernet.decrypt(decoded_cipher_text)
-    return plain_text.decode('ascii')
+    def generate_secret_key(self):
+        self.secret_key = Fernet.generate_key().decode('utf-8')
+
+    def get_password(self) -> str:
+        if self.secret_key is None:
+            raise Exception('Secret key is not generated')
+        if self.db_password is None:
+            raise Exception('DB Password is not configured')
+        fernet = Fernet(self.secret_key.encode('utf-8'))
+        return fernet.decrypt(self.db_password.encode('utf-8')).decode('utf-8')
+
+    def set_password(self, password: str) -> None:
+        if self.secret_key is None:
+            raise Exception('Secret is not generated')
+        fernet = Fernet(self.secret_key.encode('utf-8'))
+        self.db_password = fernet.encrypt(password.encode('utf-8')).decode('utf-8')
+
+    def get_db_url(self) -> URL:
+        if self.db_driver == 'mysql':
+            password = self.get_password()
+            return URL.create(
+                drivername='mysql+mysqlconnector',
+                username=self.db_user,
+                password=password,
+                host=self.db_host,
+                port=self.db_port,
+                database=self.db_database,
+            )
+        elif self.db_driver == 'sqlite':
+            storage_path = Path(__file__).parent.parent / 'storage'
+            if not storage_path.exists():
+                storage_path.mkdir()
+
+            sqlite_file_path = storage_path / '{}.db'.format(self.db_database)
+            if not sqlite_file_path.exists():
+                sqlite_file_path.touch()
+
+            return URL.create(
+                drivername='sqlite',
+                database=str(sqlite_file_path),
+            )
+        else:
+            raise Exception('Unknown db driver {}, supported driver: mysql, sqlite'.format(self.db_driver))
 
 
 @lru_cache()

@@ -8,7 +8,7 @@ engine = create_engine(
     get_settings().get_db_url(),
     future=True,
     # if using sqlite
-    connect_args={"check_same_thread": False} if get_settings().driver == 'sqlite' else {}
+    connect_args={"check_same_thread": False} if get_settings().db_driver == 'sqlite' else {}
 )
 
 
