@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, Boolean, Text, ForeignKey, UniqueConstraint, Index, MetaData
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import declarative_base, relation, relationship
 
 
 convention = {
@@ -50,6 +50,9 @@ class Sales(Base):
     marketPlaceId = Column(Integer, ForeignKey(MarketPlace.id))
     date = Column(Date)
 
+    marketPlace = relationship('MarketPlace', backref='sales_collection')
+    salesd_collection = relationship('SalesD', back_populates='sales')
+
     UniqueConstraint(code)
     Index('Idx_date', date)
 
@@ -62,12 +65,17 @@ class SalesD(Base):
     quantity = Column(Numeric(20, 2), nullable=False)
     unitPrice = Column(Numeric(20, 0))
 
+    sales = relationship('Sales', back_populates='salesd_collection')
+    item = relationship('Item')
+
 
 class Purchase(Base):
     __tablename__ = 'tpurchase'
     id = Column(Integer, primary_key=True)
     code = Column(String(50), nullable=False)
     date = Column(Date)
+
+    purchased_collection = relationship('PurchaseD', back_populates='purchase')
 
     UniqueConstraint(code)
     Index('Idx_date', date)
@@ -80,6 +88,9 @@ class PurchaseD(Base):
     itemId = Column(Integer, ForeignKey(Item.id), nullable=False)
     quantity = Column(Numeric(20, 2), nullable=False)
     unitPrice = Column(Numeric(20, 0))
+
+    purchase = relationship('Purchase', back_populates='purchased_collection')
+    item = relationship('Item')
 
 
 class ItemJournal(Base):
@@ -95,5 +106,7 @@ class ItemJournal(Base):
     purchaseDId = Column(Integer, ForeignKey(PurchaseD.id, ondelete='CASCADE', onupdate='CASCADE'))
 
     item = relationship('Item', backref='itemjournal_collection')
+    salesd = relationship('SalesD', backref='itemjournal_collection')
+    purchased = relationship('PurchaseD', backref='itemjournal_collection')
 
     Index('Idx_itemId_date', itemId, date)

@@ -7,6 +7,8 @@ from pydantic import parse_obj_as, BaseModel
 from ..db.connection import get_session
 from ..db.schema import Item, ItemCategory
 from ..model.item import ItemModel, ItemCategoryModel
+from ..model.commons import SaveResponse
+
 
 router = APIRouter(
     prefix='/item',
@@ -14,11 +16,11 @@ router = APIRouter(
 )
 
 
-class SaveResponse(BaseModel):
-    success: bool = True
-    error: Optional[str] = None
-    item: Optional[ItemModel] = None
-    itemCategory: Optional[ItemCategoryModel] = None
+# class SaveResponse(BaseModel):
+#     success: bool = True
+#     error: Optional[str] = None
+#     item: Optional[ItemModel] = None
+#     itemCategory: Optional[ItemCategoryModel] = None
 
 
 @router.get('/category/list', response_model=List[ItemCategoryModel])
@@ -32,11 +34,8 @@ async def get_item_category_list(
         keywords = q.split(' ')
         conditions = [
             or_(
-                Item.Kode.contains(keyword),
-                Item.Nama.contains(keyword),
-                Item.Barcode.contains(keyword),
-                Item.Singkatan.contains(keyword),
-                Item.Satuan.contains(keyword),
+                ItemCategory.name.contains(keyword),
+                ItemCategory.description.contains(keyword),
             )
             for keyword in keywords if len(keyword) > 0
         ]
@@ -56,7 +55,7 @@ async def get_item_category_list(
     return result
 
 
-@router.post('/category/save', response_model=SaveResponse)
+@router.post('/category/save', response_model=SaveResponse[ItemCategoryModel])
 async def save_item_category(
     itemCategory: ItemCategoryModel,
     session: Session = Depends(get_session),
@@ -79,7 +78,7 @@ async def save_item_category(
             session.commit()
             saved_item_category = ItemCategoryModel.from_orm(new_item_category)
 
-        return SaveResponse(itemCategory=saved_item_category)
+        return SaveResponse(data=saved_item_category)
 
     except Exception as ex:
         session.rollback()
@@ -97,11 +96,9 @@ async def get_item_list(
         keywords = q.split(' ')
         conditions = [
             or_(
-                Item.Kode.contains(keyword),
-                Item.Nama.contains(keyword),
-                Item.Barcode.contains(keyword),
-                Item.Singkatan.contains(keyword),
-                Item.Satuan.contains(keyword),
+                Item.code.contains(keyword),
+                Item.name.contains(keyword),
+                Item.description.contains(keyword),
             )
             for keyword in keywords if len(keyword) > 0
         ]
@@ -139,11 +136,11 @@ async def get_item_by_id(
     ).scalars().one()
 
 
-@router.post('/save', response_model=SaveResponse)
+@router.post('/save', response_model=SaveResponse[ItemModel])
 async def save_item(
     item: ItemModel,
     session: Session = Depends(get_session),
-):
+) -> SaveResponse[ItemModel]:
     try:
         if item.id is not None:
             result = session.execute(
@@ -168,9 +165,9 @@ async def save_item(
             session.commit()
             saved_item = ItemModel.from_orm(new_item)
 
-        return SaveResponse(item=saved_item)
+        return SaveResponse[ItemModel](data=saved_item)
 
     except Exception as ex:
         session.rollback()
-        return SaveResponse(success=False, error=str(ex))
+        return SaveResponse[ItemModel](success=False, error=str(ex))
 
