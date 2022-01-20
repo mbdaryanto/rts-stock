@@ -10,7 +10,7 @@ import * as yup from 'yup'
 import { Formik, Field, Form, FieldProps } from 'formik'
 import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
-import { ItemSchema, ItemType, ItemCategoriesSchema, ItemCategoryType } from '../schema/Item'
+import { ItemSchema, ItemType, ItemCategoriesSchema } from '../schema/Item'
 import { EditorModeEnum } from './utils'
 
 
@@ -37,9 +37,9 @@ function ItemListPage() {
     if (!!item) {
       const response = await saveItem(item)
       if (editorMode === EditorModeEnum.insert) {
-        setItems(oldValues => [...oldValues, response.item!])
+        setItems(oldValues => [...oldValues, response.data!])
       } else {
-        setItems(oldValues => oldValues.map(value => value.id === item.id ? response.item! : value))
+        setItems(oldValues => oldValues.map(value => value.id === item.id ? response.data! : value))
       }
     }
     onClose()

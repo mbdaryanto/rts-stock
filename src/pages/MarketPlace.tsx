@@ -7,55 +7,55 @@ import {
 import { Formik, Field, Form, FieldProps } from 'formik'
 import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
-import { ItemCategorySchema, ItemCategoryType } from '../schema/Item'
+import { MarketPlaceSchema, MarketPlaceType } from '../schema/sales'
 import { EditorModeEnum } from './utils'
 
 
-function ItemCategoryPage() {
-  const [categories, setCategories] = useState<Array<ItemCategoryType>>([])
+function MarketPlacePage() {
+  const [marketPlaces, setMarketPlaces] = useState<Array<MarketPlaceType>>([])
   const [isLoading, setLoading] = useState(false)
-  const { getItemCategories, saveItemCategory } = useAuthContext()
+  const { getJson, postJson } = useAuthContext()
 
   useEffect(() => {
     let pageIsMounted = true
     setLoading(true)
-    getItemCategories().then(
-      (response) => pageIsMounted && setCategories(response)
+    getJson('/market-place/list').then(
+      (response) => pageIsMounted && setMarketPlaces(response)
     ).finally(() => pageIsMounted && setLoading(false))
     return () => {
       pageIsMounted = false
     }
-  }, [getItemCategories])
+  }, [getJson])
 
-  const handleSave = async (itemCategory: ItemCategoryType, editorMode: EditorModeEnum) => {
-    const response = await saveItemCategory(itemCategory)
+  const handleSave = async (marketPlace: MarketPlaceType, editorMode: EditorModeEnum) => {
+    const response = await postJson('/market-place/save', marketPlace)
     if (editorMode === EditorModeEnum.insert) {
-      setCategories(old => [...old, response.data!])
+      setMarketPlaces(old => [...old, response.data!])
     } else {
-      setCategories(old => old.map(row => row.id === response.data!.id ? response.data! : row))
+      setMarketPlaces(old => old.map(row => row.id === response.data!.id ? response.data! : row))
     }
   }
 
   return (
     <Box>
-      <Heading>Item Categories</Heading>
-      <ItemCategoryBody
+      <Heading>Market Places</Heading>
+      <MarketPlaceBody
         isLoading={isLoading}
-        categories={categories}
+        marketPlaces={marketPlaces}
         onSave={handleSave}
       />
     </Box>
   )
 }
 
-function ItemCategoryBody({ isLoading, categories, onSave }: {
+function MarketPlaceBody({ isLoading, marketPlaces, onSave }: {
   isLoading: boolean,
-  categories: Array<ItemCategoryType>,
-  onSave: (itemCategory: ItemCategoryType, editorMode: EditorModeEnum) => Promise<void>,
+  marketPlaces: Array<MarketPlaceType>,
+  onSave: (marketPlace: MarketPlaceType, editorMode: EditorModeEnum) => Promise<void>,
 }) {
   const { isOpen, onClose, onOpen } = useDisclosure()
   const [ editorMode, setEditorMode ] = useState<EditorModeEnum>(EditorModeEnum.insert)
-  const [ record, setRecord ] = useState<ItemCategoryType | undefined>()
+  const [ record, setRecord ] = useState<MarketPlaceType | undefined>()
 
   if (isLoading) return (
     <Center w="100%" h="200px">
@@ -63,9 +63,9 @@ function ItemCategoryBody({ isLoading, categories, onSave }: {
     </Center>
   )
 
-  const handleClose = async (itemCategory?: ItemCategoryType): Promise<void> => {
-    if (!!itemCategory) {
-      await onSave(itemCategory, editorMode)
+  const handleClose = async (marketPlace?: MarketPlaceType): Promise<void> => {
+    if (!!marketPlace) {
+      await onSave(marketPlace, editorMode)
       // if (editorMode === EditorModeEnum.insert) {
       //   setItems(oldValues => [...oldValues, item])
       // } else {
@@ -92,8 +92,8 @@ function ItemCategoryBody({ isLoading, categories, onSave }: {
         bgColor: 'blue.100',
       },
     }}>
-      {categories?.map((category => (
-        <ListItem key={category.id!}>
+      {marketPlaces?.map((row => (
+        <ListItem key={row.id!}>
           <HStack spacing={5} paddingX={2} align="start" sx={{
             '& dt': {
               textTransform: 'uppercase',
@@ -106,17 +106,17 @@ function ItemCategoryBody({ isLoading, categories, onSave }: {
           }}>
             <Box as="dl">
               <dt>Name</dt>
-              <dd>{category.name}</dd>
+              <dd>{row.name}</dd>
             </Box>
             <Box as="dl">
               <dt>Description</dt>
-              <dd>{category.description}</dd>
+              <dd>{row.description}</dd>
             </Box>
             <Box flexGrow={1}>
             </Box>
             <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
               setEditorMode(EditorModeEnum.update)
-              setRecord(category)
+              setRecord(row)
               onOpen()
             }} variant="ghost" size="sm"/>
             <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
@@ -134,27 +134,27 @@ function ItemCategoryBody({ isLoading, categories, onSave }: {
       }}
       size="sm"
     >
-      New Category
+      New Market Place
     </Button>
-    <ItemCategoryEditorDialog itemCategory={record} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
+    <MarketPlaceEditorDialog marketPlace={record} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
     </>
   )
 }
 interface ItemCategoryEditorDialogProps extends Omit<ComponentProps<typeof Modal>, 'children' | 'onClose'> {
-  itemCategory?: ItemCategoryType,
+  marketPlace?: MarketPlaceType,
   mode: EditorModeEnum,
-  onClose: (itemCategory?: ItemCategoryType) => Promise<void>,
+  onClose: (marketPlace?: MarketPlaceType) => Promise<void>,
 }
 
-function ItemCategoryEditorDialog({ itemCategory, mode, onClose, ...rest }: ItemCategoryEditorDialogProps) {
+function MarketPlaceEditorDialog({ marketPlace, mode, onClose, ...rest }: ItemCategoryEditorDialogProps) {
   const initialFocusRef = useRef(null)
   const toast = useToast()
 
-  const initialValues: Partial<ItemCategoryType> | undefined = {
-    id: itemCategory?.id,
-    name: itemCategory?.name ?? '',
-    description: itemCategory?.description ?? '',
-    isActive: itemCategory?.isActive ?? true,
+  const initialValues: Partial<MarketPlaceType> | undefined = {
+    id: marketPlace?.id,
+    name: marketPlace?.name ?? '',
+    description: marketPlace?.description ?? '',
+    isActive: marketPlace?.isActive ?? true,
   }
 
   return (
@@ -163,18 +163,18 @@ function ItemCategoryEditorDialog({ itemCategory, mode, onClose, ...rest }: Item
       <ModalContent>
         <Formik
           initialValues={initialValues}
-          validationSchema={ItemCategorySchema}
+          validationSchema={MarketPlaceSchema}
           onSubmit={async (values, {setSubmitting}) => {
-            const itemCategoryCast = ItemCategorySchema.cast(values)
-            // window.alert(JSON.stringify(itemCategoryCast, null, 2))
-            await onClose(itemCategoryCast)
+            const marketPlaceCast = MarketPlaceSchema.cast(values)
+            // window.alert(JSON.stringify(marketPlaceCast, null, 2))
+            await onClose(marketPlaceCast)
             setSubmitting(false)
           }}
         >
           {({ errors }) => (
             <Form>
               <ModalHeader>
-                {mode === EditorModeEnum.insert ? 'New Category' : 'Edit Category'}
+                {mode === EditorModeEnum.insert ? 'New Market Place' : 'Edit Market Place'}
               </ModalHeader>
               <ModalCloseButton/>
               <ModalBody>
@@ -220,4 +220,4 @@ function ItemCategoryEditorDialog({ itemCategory, mode, onClose, ...rest }: Item
   )
 }
 
-export default ItemCategoryPage
+export default MarketPlacePage

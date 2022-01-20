@@ -18,15 +18,7 @@ export const ItemSchema = yup.object({
   isActive: yup.boolean().default(true).required(),
 })
 
-export const SaveResponseSchema = yup.object({
-  success: yup.bool().required(),
-  error: yup.string().nullable(),
-  item: ItemSchema.optional(),
-  itemCategory: ItemCategorySchema.optional(),
-})
-
 export const ItemCategoriesSchema = yup.array().of(ItemCategorySchema).ensure()
 
 export type ItemType = yup.TypeOf<typeof ItemSchema> | yup.Asserts<typeof ItemSchema>
 export type ItemCategoryType = yup.TypeOf<typeof ItemCategorySchema> | yup.Asserts<typeof ItemCategorySchema>
-export type SaveResponseType = yup.TypeOf<typeof SaveResponseSchema> | yup.Asserts<typeof SaveResponseSchema>
