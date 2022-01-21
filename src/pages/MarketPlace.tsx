@@ -29,10 +29,11 @@ function MarketPlacePage() {
 
   const handleSave = async (marketPlace: MarketPlaceType, editorMode: EditorModeEnum) => {
     const response = await postJson('/market-place/save', marketPlace)
+    const savedData = MarketPlaceSchema.cast(response.data)
     if (editorMode === EditorModeEnum.insert) {
-      setMarketPlaces(old => [...old, response.data!])
+      setMarketPlaces(old => [...old, savedData])
     } else {
-      setMarketPlaces(old => old.map(row => row.id === response.data!.id ? response.data! : row))
+      setMarketPlaces(old => old.map(row => row.id === savedData.id ? savedData : row))
     }
   }
 

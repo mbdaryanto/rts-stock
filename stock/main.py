@@ -2,12 +2,13 @@ from os.path import join, dirname, abspath, exists
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from .routers import item
+from .routers import item, market_place
 
 
 app = FastAPI()
 
 app.include_router(item.router)
+app.include_router(market_place.router)
 
 STATIC_FILES_DIR = join(dirname(abspath(__file__)), 'assets')
 if not exists(STATIC_FILES_DIR):

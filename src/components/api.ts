@@ -1,6 +1,6 @@
 import { toString, toPairs } from 'lodash'
 import type { ItemType, ItemCategoryType } from '../schema/Item'
-import type { SaveResponseType } from '../schema/commons'
+import type { SaveResponseType } from '../schema/common'
 
 interface Dictionary {
   [key: string]: string | number

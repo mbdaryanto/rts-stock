@@ -36,10 +36,11 @@ function ItemListPage() {
   const handleClose = async (item?: ItemType): Promise<void> => {
     if (!!item) {
       const response = await saveItem(item)
+      const savedData = ItemSchema.cast(response.data)
       if (editorMode === EditorModeEnum.insert) {
-        setItems(oldValues => [...oldValues, response.data!])
+        setItems(oldValues => [...oldValues, savedData])
       } else {
-        setItems(oldValues => oldValues.map(value => value.id === item.id ? response.data! : value))
+        setItems(oldValues => oldValues.map(value => value.id === savedData.id ? savedData : value))
       }
     }
     onClose()

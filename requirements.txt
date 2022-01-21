@@ -7,3 +7,5 @@ python-jose
 cryptography
 mysql-connector==2.1.7
 # strawberry-graphql[debug-server]
+rich
+uvicorn[standard]

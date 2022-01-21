@@ -101,6 +101,9 @@ function Navbar({ title, children }: {
               <MenuItem {...getMenuItemProps("/items")}>
                 Items
               </MenuItem>
+              <MenuItem {...getMenuItemProps("/market-place")}>
+                Market Place
+              </MenuItem>
               <MenuItem {...getMenuItemProps("/kartu-stok")}>
                 Kartu Stok
               </MenuItem>
@@ -123,10 +126,31 @@ function Navbar({ title, children }: {
         </HStack>
         <HStack spacing={5} display={{ base: "none", md: "flex" }} {...containerProps}>
           <Button {...getNavProps("/")}><FaHome/></Button>
-          <Button {...getNavProps("/item-categories")}>Categories</Button>
+          <Menu>
+            <MenuButton
+              as={Button}
+              size="sm"
+              variant="ghost"
+              colorScheme="teal"
+            >
+              Master
+            </MenuButton>
+            <MenuList>
+              <MenuItem {...getMenuItemProps("/item-categories")}>
+                Categories
+              </MenuItem>
+              <MenuItem {...getMenuItemProps("/items")}>
+                Items
+              </MenuItem>
+              <MenuItem {...getMenuItemProps("/market-place")}>
+                Market Place
+              </MenuItem>
+            </MenuList>
+          </Menu>
+          {/* <Button {...getNavProps("/item-categories")}>Categories</Button>
           <Button {...getNavProps("/items")}>Items</Button>
           <Button {...getNavProps("/kartu-stok")}>Kartu Stok</Button>
-          <Button {...getNavProps("/ringkasan-stok")}>Ringkasan Stok</Button>
+          <Button {...getNavProps("/ringkasan-stok")}>Ringkasan Stok</Button> */}
           <Box flexGrow={1}></Box>
           { auth.isAuthenticated ? (
             <>

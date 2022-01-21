@@ -29,10 +29,11 @@ function ItemCategoryPage() {
 
   const handleSave = async (itemCategory: ItemCategoryType, editorMode: EditorModeEnum) => {
     const response = await saveItemCategory(itemCategory)
+    const savedData = ItemCategorySchema.cast(response.data)
     if (editorMode === EditorModeEnum.insert) {
-      setCategories(old => [...old, response.data!])
+      setCategories(old => [...old, savedData])
     } else {
-      setCategories(old => old.map(row => row.id === response.data!.id ? response.data! : row))
+      setCategories(old => old.map(row => row.id === savedData.id ? savedData : row))
     }
   }
 

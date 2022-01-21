@@ -5,6 +5,7 @@ import { AuthProvider, useAuthContext } from './components/auth'
 import Navbar from './components/Navbar'
 import ItemListPage from './pages/ItemList'
 import ItemCategoryPage from './pages/ItemCategory'
+import MarketPlacePage from './pages/MarketPlace'
 
 const App = () => (
   <ChakraProvider>
@@ -23,6 +24,9 @@ const App = () => (
             </Route>
             <Route path="/item-categories">
               <ItemCategoryPage/>
+            </Route>
+            <Route path="/market-place">
+              <MarketPlacePage/>
             </Route>
             <PrivateRoute path="/kartu-stok">
               Kartu Stok
