@@ -1,14 +1,16 @@
 import { useState, useEffect, ComponentProps, useRef } from 'react'
 import {
-  Heading, Box, List, ListItem, CircularProgress, Center, IconButton,
-  HStack, Input, Button, VStack, Modal, useToast, ModalOverlay, ModalContent,
-  ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel,
+  Heading, Box, CircularProgress, Center, IconButton,
+  Input, Button, VStack, Modal, useToast, ModalOverlay, ModalContent,
+  ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel, Checkbox,
+  Table, Thead, Tbody, Tr, Th, Td,
   FormErrorMessage, Textarea, ModalFooter, useDisclosure } from '@chakra-ui/react'
 import { Formik, Field, Form, FieldProps } from 'formik'
 import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
 import { ItemCategorySchema, ItemCategoryType } from '../schema/Item'
 import { EditorModeEnum } from './utils'
+import { Active } from '../components/common'
 
 
 function ItemCategoryPage() {
@@ -77,68 +79,59 @@ function ItemCategoryBody({ isLoading, categories, onSave }: {
   }
 
   return (
-    <>
-    <List pt='8px' pb='8px' sx={{
-      '& > li': {
-        'padding': '4px',
-      },
-      '& > li ~ li': {
-        'borderTopWidth': '1px',
-        'borderTopColor': 'gray.300',
-      },
-      '& > li:nth-of-type(even)': {
-        bgColor: 'gray.100',
-      },
-      '& > li:hover': {
-        bgColor: 'blue.100',
-      },
-    }}>
-      {categories?.map((category => (
-        <ListItem key={category.id!}>
-          <HStack spacing={5} paddingX={2} align="start" sx={{
-            '& dt': {
-              textTransform: 'uppercase',
-              fontSize: 'xs',
-              color: 'gray.500',
-            },
-            '& dd': {
-              fontSize: 'sm',
-            },
-          }}>
-            <Box as="dl">
-              <dt>Name</dt>
-              <dd>{category.name}</dd>
-            </Box>
-            <Box as="dl">
-              <dt>Description</dt>
-              <dd>{category.description}</dd>
-            </Box>
-            <Box flexGrow={1}>
-            </Box>
-            <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
-              setEditorMode(EditorModeEnum.update)
-              setRecord(category)
-              onOpen()
-            }} variant="ghost" size="sm"/>
-            <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
-          </HStack>
-        </ListItem>
-      )))}
-    </List>
+    <VStack spacing={8} mt={8}>
+      <Table size="sm" sx={{
+        // '& > tr ~ tr': {
+        //   'borderTopWidth': '1px',
+        //   'borderTopColor': 'gray.300',
+        // },
+        '& tbody > tr:nth-of-type(even)': {
+          bgColor: 'gray.100',
+        },
+        '& tbody > tr:hover': {
+          bgColor: 'blue.100',
+        },
+      }}>
+        <Thead>
+          <Tr>
+            <Th>Name</Th>
+            <Th>Description</Th>
+            <Th>Active</Th>
+            <Th>Actions</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {categories?.map((category => (
+            <Tr key={category.id!}>
+              <Td>{category.name}</Td>
+              <Td>{category.description}</Td>
+              <Td><Active isActive={category.isActive}/></Td>
+              <Td>
+                <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
+                  setEditorMode(EditorModeEnum.update)
+                  setRecord(category)
+                  onOpen()
+                }} variant="ghost" size="sm"/>
+                <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
+              </Td>
+            </Tr>
+          )))}
+        </Tbody>
+      </Table>
 
-    <Button
-      leftIcon={<FaPlus/>}
-      onClick={() => {
-        setEditorMode(EditorModeEnum.insert)
-        setRecord(undefined)
-        onOpen()
-      }}
-      size="sm"
-    >
-      New Category
-    </Button>
-    <ItemCategoryEditorDialog itemCategory={record} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
-    </>
+      <Button
+        leftIcon={<FaPlus/>}
+        onClick={() => {
+          setEditorMode(EditorModeEnum.insert)
+          setRecord(undefined)
+          onOpen()
+        }}
+        size="sm"
+      >
+        New Category
+      </Button>
+      <ItemCategoryEditorDialog itemCategory={record} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
+    </VStack>
   )
 }
 interface ItemCategoryEditorDialogProps extends Omit<ComponentProps<typeof Modal>, 'children' | 'onClose'> {
@@ -195,6 +188,15 @@ function ItemCategoryEditorDialog({ itemCategory, mode, onClose, ...rest }: Item
                       <FormControl isInvalid={!!meta.touched && !!meta.error}>
                         <FormLabel htmlFor={field.name}>Deskripsi</FormLabel>
                         <Textarea {...field} id={field.name}/>
+                        <FormErrorMessage>{meta.error}</FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+
+                  <Field name="isActive">
+                    {({ field, meta }: FieldProps<string>) => (
+                      <FormControl isInvalid={!!meta.touched && !!meta.error}>
+                        <Checkbox isChecked={field.checked} {...field}>Aktif</Checkbox>
                         <FormErrorMessage>{meta.error}</FormErrorMessage>
                       </FormControl>
                     )}

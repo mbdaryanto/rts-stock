@@ -1,9 +1,10 @@
 import type { ComponentProps } from 'react'
 import { useState, useEffect, useRef } from 'react'
 import {
-  Heading, List, ListItem, IconButton, Button, VStack, Box, HStack,
-  FormControl, Input, FormLabel, FormErrorMessage, Textarea, Select,
+  Heading, IconButton, Button, VStack,
+  FormControl, Input, FormLabel, FormErrorMessage, Textarea, Select, Checkbox,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton,
+  Table, Thead, Tbody, Tr, Th, Td,
   useDisclosure, useToast, CircularProgress, Center
 } from '@chakra-ui/react'
 import * as yup from 'yup'
@@ -12,6 +13,7 @@ import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
 import { ItemSchema, ItemType, ItemCategoriesSchema } from '../schema/Item'
 import { EditorModeEnum } from './utils'
+import { Active } from '../components/common'
 
 
 function ItemListPage() {
@@ -54,75 +56,60 @@ function ItemListPage() {
           <CircularProgress isIndeterminate/>
         </Center>
       ) : (
-        <>
-        <List pt='8px' pb='8px' sx={{
-          '& > li': {
-            'padding': '4px',
-          },
-          '& > li ~ li': {
-            'borderTopWidth': '1px',
-            'borderTopColor': 'gray.300',
-          },
-          '& > li:nth-of-type(even)': {
-            bgColor: 'gray.100',
-          },
-          '& > li:hover': {
-            bgColor: 'blue.100',
-          },
-        }}>
-          {items.map(item => (
-            <ListItem key={item.id}>
-
-              <HStack spacing={5} paddingX={2} align="start" sx={{
-                '& dt': {
-                  textTransform: 'uppercase',
-                  fontSize: 'xs',
-                  color: 'gray.500',
-                },
-                '& dd': {
-                  fontSize: 'sm',
-                },
-              }}>
-                <Box as="dl">
-                  <dt>Kode</dt>
-                  <dd>{item.code}</dd>
-                </Box>
-                <Box as="dl">
-                  <dt>Nama</dt>
-                  <dd>{item.name}</dd>
-                </Box>
-                <Box as="dl">
-                  <dt>Kategori</dt>
-                  <dd>{item.category?.name}</dd>
-                </Box>
-                <Box as="dl">
-                  <dt>Deskripsi</dt>
-                  <dd>{item.description}</dd>
-                </Box>
-                <Box as="dl">
-                  <dt>Harga Jual</dt>
-                  <dd>{item.sellingPrice}</dd>
-                </Box>
-                <Box flexGrow={1}/>
-                <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
-                  setEditorMode(EditorModeEnum.update)
-                  setItemToEdit(item)
-                  onOpen()
-                }} variant="ghost" size="sm"/>
-                <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
-              </HStack>
-            </ListItem>
-          ))}
-        </List>
-        <Button leftIcon={<FaPlus/>} onClick={() => {
-          setEditorMode(EditorModeEnum.insert)
-          setItemToEdit(undefined)
-          onOpen()
-        }} size="sm">
-          New Item
-        </Button>
-        <ItemEditorDialog item={itemToEdit} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
-        </>
+        <VStack spacing={8} mt={8}>
+          <Table size="sm" sx={{
+            // '& > tr ~ tr': {
+            //   'borderTopWidth': '1px',
+            //   'borderTopColor': 'gray.300',
+            // },
+            '& tbody > tr:nth-of-type(even)': {
+              bgColor: 'gray.100',
+            },
+            '& tbody > tr:hover': {
+              bgColor: 'blue.100',
+            },
+          }}>
+            <Thead>
+              <Tr>
+                <Th>Kode</Th>
+                <Th>Nama</Th>
+                <Th>Kategori</Th>
+                <Th>Deskripsi</Th>
+                <Th isNumeric>Harga Jual</Th>
+                <Th>Active</Th>
+                <Th>Actions</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {items.map(row => (
+                <Tr key={row.id}>
+                  <Td>{row.code}</Td>
+                  <Td>{row.name}</Td>
+                  <Td>{row.category?.name}</Td>
+                  <Td>{row.description}</Td>
+                  <Td isNumeric>{row.sellingPrice}</Td>
+                  <Td><Active isActive={row.isActive}/></Td>
+                  <Td>
+                    <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
+                      setEditorMode(EditorModeEnum.update)
+                      setItemToEdit(row)
+                      onOpen()
+                    }} variant="ghost" size="sm"/>
+                    <IconButton aria-label="Delete" icon={<FaTrash/>} variant="ghost" size="sm"/>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+          <Button leftIcon={<FaPlus/>} onClick={() => {
+            setEditorMode(EditorModeEnum.insert)
+            setItemToEdit(undefined)
+            onOpen()
+          }} size="sm">
+            New Item
+          </Button>
+          <ItemEditorDialog item={itemToEdit} mode={editorMode} isOpen={isOpen} onClose={handleClose}/>
+        </VStack>
       )}
     </>
   )
@@ -236,6 +223,15 @@ function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProp
                       <FormControl isInvalid={!!meta.touched && !!meta.error}>
                         <FormLabel htmlFor={field.name}>Deskripsi</FormLabel>
                         <Textarea {...field} id={field.name}/>
+                        <FormErrorMessage>{meta.error}</FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+
+                  <Field name="isActive">
+                    {({ field, meta }: FieldProps<string>) => (
+                      <FormControl isInvalid={!!meta.touched && !!meta.error}>
+                        <Checkbox isChecked={field.checked} {...field}>Aktif</Checkbox>
                         <FormErrorMessage>{meta.error}</FormErrorMessage>
                       </FormControl>
                     )}

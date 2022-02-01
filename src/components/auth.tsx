@@ -1,4 +1,4 @@
-import { useState, createContext, ReactNode, useContext, useEffect } from 'react'
+import { useState, createContext, ReactNode, useContext, useEffect, useMemo } from 'react'
 import { object, string, number } from 'yup'
 import { isString } from 'lodash'
 import { ApiContextType, createApiContext } from './api'
@@ -98,29 +98,6 @@ export function AuthProvider({
 
   const login = async (username: string, password: string) => {
     const responseJson = await api.login(username, password)
-    // const formData = new URLSearchParams();
-    // formData.append('username', username);
-    // formData.append('password', password);
-
-    // const response = await fetch("/token/login", {
-    //   body: formData.toString(),
-    //   method: 'POST',
-    //   headers: {
-    //     'Accept': 'application/json',
-    //     'Content-Type': 'application/x-www-form-urlencoded',
-    //   },
-    // });
-
-    // if (response.status === 401) {
-    //   const responseJson = await response.json();
-    //   throw new LoginError(responseJson.detail, response.status, response.statusText);
-    // }
-
-    // if (response.status !== 200) {
-    //   throw new LoginError("Invalid login response", response.status, response.statusText);
-    // }
-
-    // const responseJson = await response.json() as TokenType;
 
     if (!responseJson.access_token || !isString(responseJson.access_token)) {
       throw new Error("Invalid login response");

@@ -1,6 +1,5 @@
-import type { ComponentProps } from 'react'
 import { ChakraProvider } from '@chakra-ui/react'
-import { HashRouter as Router, Switch, Route, Redirect } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuthContext } from './components/auth'
 import Navbar from './components/Navbar'
 import ItemListPage from './pages/ItemList'
@@ -11,60 +10,49 @@ const App = () => (
   <ChakraProvider>
     <AuthProvider>
       <Router>
-        <Navbar title="Stock App">
-          <Switch>
-            <Route path="/login">
-              Login Page
-            </Route>
-            <Route path="/" exact>
-              Main Page
-            </Route>
-            <Route path="/items">
-              <ItemListPage/>
-            </Route>
-            <Route path="/item-categories">
-              <ItemCategoryPage/>
-            </Route>
-            <Route path="/market-place">
-              <MarketPlacePage/>
-            </Route>
-            <PrivateRoute path="/kartu-stok">
-              Kartu Stok
-            </PrivateRoute>
-            <PrivateRoute path="/ringkasan-stok">
-              Ringkasan Stok
-            </PrivateRoute>
-            <Route path="/test">
-              Test
-            </Route>
-          </Switch>
-        </Navbar>
+        <Routes>
+          <Route path="/" element={<LayoutPage/>}>
+            <Route index element={'Main Page'}/>
+            <Route path="login" element={'Login Page'}/>
+            <Route path="items" element={<ItemListPage/>}/>
+            <Route path="item-categories" element={<ItemCategoryPage/>}/>
+            <Route path="market-place" element={<MarketPlacePage/>}/>
+            <Route path="kartu-stok" element={
+              <RequireAuth>
+                <div>Kartu Stok</div>
+              </RequireAuth>
+            }/>
+            <Route path="ringkasan-stok" element={
+              <RequireAuth>
+                <div>Ringkasan Stok</div>
+              </RequireAuth>
+            }/>
+          </Route>
+        </Routes>
       </Router>
     </AuthProvider>
   </ChakraProvider>
 )
 
-type PrivateRouteProps = ComponentProps<typeof Route>
+const LayoutPage = () => (
+  <Navbar title="Stock App">
+    <Outlet/>
+  </Navbar>
+)
 
-function PrivateRoute({ children, ...rest }: PrivateRouteProps) {
+function RequireAuth({ children }: { children: JSX.Element }) {
   const { auth } = useAuthContext()
-  return (
-    <Route
-      {...rest}
-      render={({ location }) =>
-        auth.isAuthenticated ? (
-          children
-        ) : (
-          <Redirect
-            to={{
-              pathname: "/login",
-              state: { from: location }
-            }}
-          />
-        )
-      }
-    />
-  );
+  let location = useLocation();
+
+  if (!auth.isAuthenticated) {
+    // Redirect them to the /login page, but save the current location they were
+    // trying to go to when they were redirected. This allows us to send them
+    // along to that page after they login, which is a nicer user experience
+    // than dropping them off on the home page.
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
 }
 
 export default App;
