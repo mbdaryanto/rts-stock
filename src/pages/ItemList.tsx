@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react'
 import { useState, useEffect, useRef } from 'react'
 import {
   Heading, IconButton, Button, VStack,
-  FormControl, Input, FormLabel, FormErrorMessage, Textarea, Select, Checkbox,
+  FormControl, Input, FormLabel, FormErrorMessage, Textarea, Select,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton,
   Table, Thead, Tbody, Tr, Th, Td,
   useDisclosure, useToast, CircularProgress, Center
@@ -13,7 +13,7 @@ import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
 import { ItemSchema, ItemType, ItemCategoriesSchema } from '../schema/Item'
 import { EditorModeEnum } from './utils'
-import { Active } from '../components/common'
+import { Active, CheckboxField } from '../components/common'
 
 
 function ItemListPage() {
@@ -76,8 +76,8 @@ function ItemListPage() {
                 <Th>Kategori</Th>
                 <Th>Deskripsi</Th>
                 <Th isNumeric>Harga Jual</Th>
-                <Th>Active</Th>
-                <Th>Actions</Th>
+                <Th textAlign="center">Active</Th>
+                <Th textAlign="center">Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -88,8 +88,8 @@ function ItemListPage() {
                   <Td>{row.category?.name}</Td>
                   <Td>{row.description}</Td>
                   <Td isNumeric>{row.sellingPrice}</Td>
-                  <Td><Active isActive={row.isActive}/></Td>
-                  <Td>
+                  <Td textAlign="center"><Active isActive={row.isActive}/></Td>
+                  <Td textAlign="center">
                     <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
                       setEditorMode(EditorModeEnum.update)
                       setItemToEdit(row)
@@ -228,14 +228,7 @@ function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProp
                     )}
                   </Field>
 
-                  <Field name="isActive">
-                    {({ field, meta }: FieldProps<string>) => (
-                      <FormControl isInvalid={!!meta.touched && !!meta.error}>
-                        <Checkbox isChecked={field.checked} {...field}>Aktif</Checkbox>
-                        <FormErrorMessage>{meta.error}</FormErrorMessage>
-                      </FormControl>
-                    )}
-                  </Field>
+                  <CheckboxField name="isActive" label={'Aktif'}/>
                 </VStack>
               </ModalBody>
               <ModalFooter>

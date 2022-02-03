@@ -2,7 +2,7 @@ import { useState, useEffect, ComponentProps, useRef } from 'react'
 import {
   Heading, Box, CircularProgress, Center, IconButton,
   Input, Button, VStack, Modal, useToast, ModalOverlay, ModalContent,
-  ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel, Checkbox,
+  ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel,
   Table, Thead, Tbody, Tr, Th, Td,
   FormErrorMessage, Textarea, ModalFooter, useDisclosure } from '@chakra-ui/react'
 import { Formik, Field, Form, FieldProps } from 'formik'
@@ -10,7 +10,7 @@ import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
 import { MarketPlaceSchema, MarketPlaceType } from '../schema/sales'
 import { EditorModeEnum } from './utils'
-import { Active } from '../components/common'
+import { Active, CheckboxField } from '../components/common'
 
 
 function MarketPlacePage() {
@@ -80,7 +80,7 @@ function MarketPlaceBody({ isLoading, marketPlaces, onSave }: {
 
   return (
     <VStack spacing={8} mt={8}>
-      <Table size="sm" sx={{
+      <Table size="sm" textAlign="start" sx={{
         // '& > tr': {
         //   'padding': '4px',
         // },
@@ -117,8 +117,8 @@ function MarketPlaceBody({ isLoading, marketPlaces, onSave }: {
           <Tr>
             <Th>Name</Th>
             <Th>Description</Th>
-            <Th>Active</Th>
-            <Th>Actions</Th>
+            <Th textAlign="center">Active</Th>
+            <Th textAlign="center">Actions</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -126,10 +126,10 @@ function MarketPlaceBody({ isLoading, marketPlaces, onSave }: {
             <Tr key={row.id!}>
               <Td>{row.name}</Td>
               <Td>{row.description}</Td>
-              <Td className="align-right">
-                <span><Active isActive={row.isActive}/></span>
+              <Td textAlign="center">
+                <Active isActive={row.isActive}/>
               </Td>
-              <Td>
+              <Td textAlign="center">
                 <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
                   setEditorMode(EditorModeEnum.update)
                   setRecord(row)
@@ -216,14 +216,7 @@ function MarketPlaceEditorDialog({ marketPlace, mode, onClose, ...rest }: ItemCa
                     )}
                   </Field>
 
-                  <Field name="isActive">
-                    {({ field, meta }: FieldProps<string>) => (
-                      <FormControl isInvalid={!!meta.touched && !!meta.error}>
-                        <Checkbox isChecked={field.checked} {...field}>Aktif</Checkbox>
-                        <FormErrorMessage>{meta.error}</FormErrorMessage>
-                      </FormControl>
-                    )}
-                  </Field>
+                  <CheckboxField name="isActive" label={'Aktif'}/>
                 </VStack>
               </ModalBody>
               <ModalFooter>
