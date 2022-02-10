@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, Enum, Boolean, Text, ForeignKey, UniqueConstraint, Index, MetaData
+from sqlalchemy import Column, Integer, LargeBinary, String, Numeric, Date, Enum, Boolean, Text, ForeignKey, UniqueConstraint, Index, MetaData
 from sqlalchemy.orm import declarative_base, relation, relationship
 
 
@@ -33,6 +33,17 @@ class Item(Base):
     category = relationship('ItemCategory', backref='item_collection')
 
     UniqueConstraint(code)
+
+
+class ItemImg(Base):
+    __tablename__ = 'mitemimg'
+    id = Column(Integer, primary_key=True)
+    itemId = Column(Integer, ForeignKey(Item.id, ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    contentType = Column(String(50))
+    content = Column(LargeBinary(10_000_000))
+    originalFileName = Column(String(255))
+
+    item = relationship('Item', backref='item_images')
 
 
 class MarketPlace(Base):

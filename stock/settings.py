@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     db_password: Optional[str] = None
 
     class Config:
-        env_file = str(Path(__file__).parent.parent / '.env')
+        env_file = str(Path(__file__).parent / '.env')
 
     def save(self) -> None:
         with open(self.Config.env_file, 'wt') as out:
