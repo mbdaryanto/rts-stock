@@ -1,11 +1,8 @@
-from typing import Optional, TypeVar, Generic
+from typing import Optional
 from pydantic import BaseModel
 
 
-T = TypeVar('T')
-
-
-class SaveResponse(BaseModel, Generic[T]):
+class SaveResponse(BaseModel):
     success: bool = True
     error: Optional[str] = None
-    data: Optional[T] = None
+    data: Optional[BaseModel] = None

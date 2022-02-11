@@ -55,7 +55,7 @@ async def get_item_category_list(
     return result
 
 
-@router.post('/category/save', response_model=SaveResponse[ItemCategoryModel])
+@router.post('/category/save', response_model=SaveResponse)
 async def save_item_category(
     itemCategory: ItemCategoryModel,
     session: Session = Depends(get_session),
@@ -136,11 +136,11 @@ async def get_item_by_id(
     ).scalars().one()
 
 
-@router.post('/save', response_model=SaveResponse[ItemModel])
+@router.post('/save', response_model=SaveResponse)
 async def save_item(
     item: ItemModel,
     session: Session = Depends(get_session),
-) -> SaveResponse[ItemModel]:
+) -> SaveResponse:
     try:
         if item.id is not None:
             result = session.execute(
@@ -154,7 +154,7 @@ async def save_item(
             session.commit()
             saved_item = ItemModel.from_orm(
                 session.execute(
-                    select(Item, ItemCategory).where(
+                    select(Item, ItemCategory).join(Item.category).where(
                         Item.id == item.id
                     ).limit(1)
                 ).scalar_one_or_none()
@@ -165,9 +165,10 @@ async def save_item(
             session.commit()
             saved_item = ItemModel.from_orm(new_item)
 
-        return SaveResponse[ItemModel](data=saved_item)
+        return SaveResponse(data=saved_item)
 
     except Exception as ex:
         session.rollback()
-        return SaveResponse[ItemModel](success=False, error=str(ex))
+        raise
+        return SaveResponse(success=False, error=str(ex))
 

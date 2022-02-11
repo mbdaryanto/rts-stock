@@ -61,7 +61,7 @@ async def get_market_place_by_id(
     ).scalars().one()
 
 
-@router.post('/save', response_model=SaveResponse[MarketPlaceModel])
+@router.post('/save', response_model=SaveResponse)
 async def save_market_place(
     data: MarketPlaceModel,
     session: Session = Depends(get_session),
