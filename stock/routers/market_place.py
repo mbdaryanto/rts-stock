@@ -61,7 +61,7 @@ async def get_market_place_by_id(
     ).scalars().one()
 
 
-@router.post('/save', response_model=SaveResponse)
+@router.post('/save', response_model=SaveResponse[MarketPlaceModel])
 async def save_market_place(
     data: MarketPlaceModel,
     session: Session = Depends(get_session),
@@ -90,8 +90,8 @@ async def save_market_place(
             session.commit()
             saved_data = MarketPlaceModel.from_orm(new_data)
 
-        return SaveResponse(data=saved_data)
+        return SaveResponse[MarketPlaceModel](data=saved_data)
 
     except Exception as ex:
         session.rollback()
-        return SaveResponse(success=False, error=str(ex))
+        return SaveResponse[MarketPlaceModel](success=False, error=str(ex))

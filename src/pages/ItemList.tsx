@@ -16,6 +16,9 @@ import { EditorModeEnum } from './utils'
 import { Active, CheckboxField } from '../components/common'
 
 
+const nf = Intl.NumberFormat();
+
+
 function ItemListPage() {
   const [isLoading, setLoading] = useState(false)
   const { isOpen, onClose, onOpen } = useDisclosure()
@@ -87,7 +90,7 @@ function ItemListPage() {
                   <Td>{row.name}</Td>
                   <Td>{row.category?.name}</Td>
                   <Td>{row.description}</Td>
-                  <Td isNumeric>{row.sellingPrice}</Td>
+                  <Td isNumeric>{nf.format(row.sellingPrice ?? 0.0)}</Td>
                   <Td textAlign="center"><Active isActive={row.isActive}/></Td>
                   <Td textAlign="center">
                     <IconButton aria-label="Edit" icon={<FaEdit/>} onClick={() => {
