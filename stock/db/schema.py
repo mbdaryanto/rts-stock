@@ -62,7 +62,7 @@ class Sales(Base):
     date = Column(Date)
 
     marketPlace = relationship('MarketPlace', backref='sales_collection')
-    salesd_collection = relationship('SalesD', back_populates='sales')
+    details = relationship('SalesD', back_populates='sales')
 
     UniqueConstraint(code)
     Index('Idx_date', date)
@@ -76,7 +76,7 @@ class SalesD(Base):
     quantity = Column(Numeric(20, 2), nullable=False)
     unitPrice = Column(Numeric(20, 0))
 
-    sales = relationship('Sales', back_populates='salesd_collection')
+    sales = relationship('Sales', back_populates='details')
     item = relationship('Item')
 
 
@@ -88,7 +88,7 @@ class Purchase(Base):
     marketPlaceId = Column(Integer, ForeignKey(MarketPlace.id))
 
     marketPlace = relationship('MarketPlace', backref='purchase_collection')
-    purchased_collection = relationship('PurchaseD', back_populates='purchase')
+    details = relationship('PurchaseD', back_populates='purchase')
 
     UniqueConstraint(code)
     Index('Idx_date', date)
@@ -102,7 +102,7 @@ class PurchaseD(Base):
     quantity = Column(Numeric(20, 2), nullable=False)
     unitPrice = Column(Numeric(20, 0))
 
-    purchase = relationship('Purchase', back_populates='purchased_collection')
+    purchase = relationship('Purchase', back_populates='details')
     item = relationship('Item')
 
 
@@ -118,8 +118,8 @@ class ItemJournal(Base):
     salesDId = Column(Integer, ForeignKey(SalesD.id, ondelete='CASCADE', onupdate='CASCADE'))
     purchaseDId = Column(Integer, ForeignKey(PurchaseD.id, ondelete='CASCADE', onupdate='CASCADE'))
 
-    item = relationship('Item', backref='itemjournal_collection')
-    salesd = relationship('SalesD', backref='itemjournal_collection')
-    purchased = relationship('PurchaseD', backref='itemjournal_collection')
+    item = relationship('Item', backref='itemjournal')
+    salesd = relationship('SalesD', backref='itemjournal')
+    purchased = relationship('PurchaseD', backref='itemjournal')
 
     Index('Idx_itemId_date', itemId, date)
