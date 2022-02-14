@@ -85,7 +85,9 @@ class Purchase(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(50), nullable=False)
     date = Column(Date)
+    marketPlaceId = Column(Integer, ForeignKey(MarketPlace.id))
 
+    marketPlace = relationship('MarketPlace', backref='purchase_collection')
     purchased_collection = relationship('PurchaseD', back_populates='purchase')
 
     UniqueConstraint(code)
