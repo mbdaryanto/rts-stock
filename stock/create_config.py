@@ -16,6 +16,7 @@ def create_config():
 
     if not settings.secret_key:
         settings.generate_secret_key()
+        console.print('Secret Key generated')
 
     console.print('Setting database connection')
 

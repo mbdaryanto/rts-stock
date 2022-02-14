@@ -1,11 +1,12 @@
 from typing import Optional, List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import select, and_, or_, update
 from sqlalchemy.orm import Session
 from pydantic import parse_obj_as, BaseModel
+from fastapi.responses import Response
 
 from ..db.connection import get_session
-from ..db.schema import Item, ItemCategory
+from ..db.schema import Item, ItemCategory, ItemImg
 from ..model.item import ItemModel, ItemCategoryModel
 from ..model.commons import SaveResponse
 
@@ -136,6 +137,28 @@ async def get_item_by_id(
     ).scalars().one()
 
 
+@router.get('/image/{item_id}', response_class=Response)
+async def get_item_image_by_id(
+    item_id: int,
+    session: Session = Depends(get_session),
+):
+    item_img: ItemImg = session.execute(
+        select(
+            ItemImg
+        ).where(
+            ItemImg.itemId == item_id
+        )
+    ).scalar_one_or_none()
+
+    if item_img is None or not item_img.content:
+        raise HTTPException(status_code=404, detail='Image not found')
+
+    return Response(
+        content=item_img.content,
+        media_type=item_img.contentType,
+    )
+
+
 @router.post('/save', response_model=SaveResponse[ItemModel])
 async def save_item(
     item: ItemModel,
@@ -172,3 +195,36 @@ async def save_item(
         # raise
         return SaveResponse[ItemModel](success=False, error=str(ex))
 
+
+@router.post('/save-image/{item_id}')
+async def save_item_image(
+    item_id: int,
+    image: UploadFile,
+    session: Session = Depends(get_session),
+):
+    item: Item = session.execute(
+        select(Item).where(Item.id == item_id)
+    ).scalar_one_or_none()
+
+    if item is None:
+        raise HTTPException(status_code=404, detail='Item not found')
+
+    item_image: ItemImg = session.execute(
+        select(ItemImg).where(ItemImg.itemId == item_id)
+    ).scalar_one_or_none()
+
+    if item_image is None:
+        item_image = ItemImg(
+            item_id=item_id,
+            content=await image.read(),
+            contentType=image.content_type,
+            originalFileName=image.filename,
+        )
+
+        session.add(item_image)
+    else:
+        item_image.content = await image.read()
+        item_image.contentType = image.content_type
+        item_image.originalFileName = image.filename
+
+    session.commit()
