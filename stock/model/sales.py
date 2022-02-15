@@ -20,10 +20,10 @@ class SalesDModel(BaseModel):
 class SalesModel(BaseModel):
     id: Optional[int] = None
     code: constr(max_length=50)
-    marketPlaceId: Optional[int] = None
     date: datetime.date
+    marketPlaceId: Optional[int] = None
 
-    salesd_collection: List[SalesDModel] = []
+    details: List[SalesDModel] = []
     marketPlace: Optional[MarketPlaceModel] = None
 
     class Config:

@@ -58,8 +58,8 @@ class Sales(Base):
     __tablename__ = 'tsales'
     id = Column(Integer, primary_key=True)
     code = Column(String(50), nullable=False)
-    marketPlaceId = Column(Integer, ForeignKey(MarketPlace.id))
     date = Column(Date)
+    marketPlaceId = Column(Integer, ForeignKey(MarketPlace.id))
 
     marketPlace = relationship('MarketPlace', backref='sales_collection')
     details = relationship('SalesD', back_populates='sales')

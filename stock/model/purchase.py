@@ -24,7 +24,7 @@ class PurchaseModel(BaseModel):
     marketPlaceId: Optional[int] = None
     date: datetime.date
 
-    purchased_collection: List[PurchaseDModel] = []
+    details: List[PurchaseDModel] = []
     marketPlace: Optional[MarketPlaceModel] = None
 
     class Config:
