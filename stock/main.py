@@ -2,19 +2,21 @@ from os.path import join, dirname, abspath, exists
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from .routers import item, market_place
+from .routers import item, market_place, purchase
 
 
 app = FastAPI()
 
 app.include_router(item.router)
 app.include_router(market_place.router)
+app.include_router(purchase.router)
 
 STATIC_FILES_DIR = join(dirname(abspath(__file__)), 'assets')
 if not exists(STATIC_FILES_DIR):
     STATIC_FILES_DIR = join(dirname(dirname(abspath(__file__))), 'public')
 
 app.mount('/assets', StaticFiles(directory=STATIC_FILES_DIR), name='assets')
+
 
 @app.get('/', response_class=HTMLResponse)
 def get_index():
@@ -23,6 +25,7 @@ def get_index():
         filename = join(dirname(dirname(abspath(__file__))), 'public', 'index.html')
     with open(filename) as f:
         return HTMLResponse(f.read())
+
 
 @app.get("/hello", response_class=HTMLResponse)
 async def get_hello():

@@ -1,13 +1,14 @@
-from typing import Optional, List
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, and_, or_, update, insert, delete
 from sqlalchemy.orm import Session
-from pydantic import parse_obj_as, BaseModel
+from pydantic import parse_obj_as
+
+from stock.model.commons import SaveResponse
 
 from ..db.connection import get_session
-from ..db.schema import Purchase, PurchaseD
-from ..model.purchase import PurchaseModel
-from ..model.market_place import MarketPlaceModel
+from ..db.schema import Purchase, PurchaseD, MarketPlace
+from ..model.purchase import PurchaseModel, PurchaseModelWithDetails
 
 
 router = APIRouter(
@@ -16,9 +17,62 @@ router = APIRouter(
 )
 
 
-@router.post('/save')
+@router.get('/list', response_model=List[PurchaseModel])
+async def list_purchase(
+    q: str = '',
+    limit: int = 20,
+    offset: int = 0,
+    session: Session = Depends(get_session),
+):
+    if q:
+        keywords = q.split(' ')
+        conditions = [
+            or_(
+                Purchase.code.contains(keyword),
+                and_(
+                    Purchase.marketPlaceId.isnot(None),
+                    MarketPlace.name.contains(keyword),
+                )
+            )
+            for keyword in keywords if len(keyword) > 0
+        ]
+    else:
+        conditions = []
+
+    result = session.execute(
+        select(
+            Purchase, MarketPlace,
+        ).outerjoin(
+            Purchase.marketPlace
+        ).where(
+            and_(
+                *conditions
+            )
+        ).limit(limit).offset(offset)
+    ).scalars().all()
+
+    return parse_obj_as(List[PurchaseModel], result)
+
+
+@router.get('/get/{purchase_id}', response_model=PurchaseModelWithDetails)
+async def get_purchase_by_id(
+    purchase_id: int,
+    session: Session = Depends(get_session),
+):
+    return PurchaseModelWithDetails.from_orm(
+        session.execute(
+            select(
+                Purchase
+            ).where(
+                Purchase.id == purchase_id
+            )
+        ).scalars().one()
+    )
+
+
+@router.post('/save', response_model=SaveResponse[PurchaseModelWithDetails])
 async def save_purchase(
-    purchase: PurchaseModel,
+    purchase: PurchaseModelWithDetails,
     session: Session = Depends(get_session),
 ):
     if purchase.id is None:
@@ -29,7 +83,7 @@ async def save_purchase(
 
         details = [
             PurchaseD(
-                purchaseId=data.id,
+                purchase=data,
                 **row.dict(exclude={'id', 'item', 'purchase', 'purchaseId'})
             )
             for row in purchase.details
@@ -100,5 +154,7 @@ async def save_purchase(
         ).scalar_one_or_none()
         session.commit()
 
-    return PurchaseModel.from_orm(data)
+    return SaveResponse(
+        data=PurchaseModelWithDetails.from_orm(data)
+    )
 

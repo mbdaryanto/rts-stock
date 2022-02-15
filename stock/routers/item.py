@@ -1,5 +1,5 @@
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy import select, and_, or_, update
 from sqlalchemy.orm import Session
 from pydantic import parse_obj_as, BaseModel
@@ -196,10 +196,10 @@ async def save_item(
         return SaveResponse[ItemModel](success=False, error=str(ex))
 
 
-@router.post('/save-image/{item_id}')
+@router.post('/save-image/{item_id}', response_model=SaveResponse[dict])
 async def save_item_image(
     item_id: int,
-    image: UploadFile,
+    image: UploadFile = File(...),
     session: Session = Depends(get_session),
 ):
     item: Item = session.execute(
@@ -228,3 +228,7 @@ async def save_item_image(
         item_image.originalFileName = image.filename
 
     session.commit()
+    return SaveResponse(data={
+        'id': item_image.id,
+        'fileSize': len(item_image.content),
+    })

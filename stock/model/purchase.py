@@ -24,8 +24,11 @@ class PurchaseModel(BaseModel):
     marketPlaceId: Optional[int] = None
     date: datetime.date
 
-    details: List[PurchaseDModel] = []
     marketPlace: Optional[MarketPlaceModel] = None
 
     class Config:
         orm_mode = True
+
+
+class PurchaseModelWithDetails(PurchaseModel):
+    details: List[PurchaseDModel] = []
