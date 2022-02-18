@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import { useState, useEffect, useRef } from 'react'
+import { atom, useRecoilState } from 'recoil'
 import {
   Heading, IconButton, Button, VStack,
   FormControl, Input, FormLabel, FormErrorMessage, Textarea, Select,
@@ -9,8 +10,9 @@ import {
 } from '@chakra-ui/react'
 import * as yup from 'yup'
 import { Formik, Field, Form, FieldProps } from 'formik'
-import { useAuthContext } from '../components/auth'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
+import Axios from 'axios'
+import { useAuthContext } from '../components/auth'
 import { ItemSchema, ItemType, ItemCategoriesSchema } from '../schema/Item'
 import { EditorModeEnum } from './utils'
 import { Active, CheckboxField } from '../components/common'
@@ -18,25 +20,46 @@ import { Active, CheckboxField } from '../components/common'
 
 const nf = Intl.NumberFormat();
 
+async function getItems(q: string, limit?: number, skip?: number): Promise<ItemType[]> {
+  const response = await Axios.get(
+    '/item/list',
+    {
+      params: {
+        q: q,
+        limit: limit ?? 20,
+        skip: skip ?? 0,
+      },
+    }
+  )
+  return response.data as ItemType[]
+}
+
+const itemListState = atom<ItemType[]>({
+  key: 'ItemList',
+  default: getItems(''),
+})
+
 
 function ItemListPage() {
-  const [isLoading, setLoading] = useState(false)
+  const [ isLoading, setLoading ] = useState(false)
   const { isOpen, onClose, onOpen } = useDisclosure()
   const [ editorMode, setEditorMode ] = useState<EditorModeEnum>(EditorModeEnum.insert)
-  const [ items, setItems ] = useState<Array<ItemType>>([])
+  const [ items, setItems ] = useRecoilState(itemListState)
   const [ itemToEdit, setItemToEdit ] = useState<ItemType | undefined>()
   const { getItems, saveItem } = useAuthContext()
 
-  useEffect(() => {
-    let pageIsMounted = true
-    setLoading(true)
-    getItems().then(
-      response => pageIsMounted && setItems(response)
-    ).finally(() => pageIsMounted && setLoading(false))
-    return () => {
-      pageIsMounted = false
-    }
-  }, [getItems])
+  // useEffect(() => {
+  //   let pageIsMounted = true
+  //   if (items.length === 0 && !isLoading) {
+  //     setLoading(true)
+  //     getItems().then(
+  //       response => pageIsMounted && setItems(response)
+  //     ).finally(() => pageIsMounted && setLoading(false))
+  //   }
+  //   return () => {
+  //     pageIsMounted = false
+  //   }
+  // }, [getItems, items, setItems, isLoading])
 
   const handleClose = async (item?: ItemType): Promise<void> => {
     if (!!item) {

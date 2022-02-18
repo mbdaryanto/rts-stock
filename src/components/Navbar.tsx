@@ -16,7 +16,7 @@ function Navbar({ title, children }: {
 }) {
   const navbarRef = useRef<HTMLDivElement>(null)
   const [ scrollY, setScrollY ] = useState<number>(0)
-  const [ navbarHeight, setNavbarHeight ] = useState<number>(0);
+  const [ navbarHeight, setNavbarHeight ] = useState<number>(60);
 
   useEffect(() => {
     const scrollListener = () => {
