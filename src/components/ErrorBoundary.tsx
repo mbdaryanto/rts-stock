@@ -1,35 +1,44 @@
-import type { ReactNode } from 'react'
-import { Component } from 'react'
+import { ReactNode, Component, ErrorInfo } from 'react'
 
 interface ErrorBoundaryProps {
   children: ReactNode
 }
 
 interface ErrorBoundaryState {
-  hasError: boolean
+  error?: Error
+  errorInfo?: ErrorInfo
 }
 
 export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { error: undefined, errorInfo: undefined };
   }
 
-  static getDerivedStateFromError(error: any) {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    // You can also log the error to an error reporting service
-    // logErrorToMyService(error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    /// Catch errors in any components below and re-render with error message
+    this.setState({
+      error: error,
+      errorInfo: errorInfo
+    })
+    // You can also log error messages to an error reporting service here
   }
 
   render() {
-    if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return <h1>Something went wrong.</h1>;
+    if (this.state.errorInfo) {
+      // Error path
+      return (
+        <div>
+          <h2>Something went wrong.</h2>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo.componentStack}
+          </details>
+        </div>
+      );
     }
+    // Normally, just render children
     return this.props.children;
   }
 }
