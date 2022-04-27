@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, LargeBinary, String, Numeric, Date, Enum, Boolean, Text, ForeignKey, UniqueConstraint, Index, MetaData
-from sqlalchemy.orm import declarative_base, relation, relationship
+from sqlalchemy.orm import declarative_base, relationship
 
 
 convention = {
