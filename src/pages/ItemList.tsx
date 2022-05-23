@@ -39,7 +39,6 @@ const itemListState = atom<ItemType[]>({
   default: getItems(''),
 })
 
-
 function ItemListPage() {
   const [ isLoading, setLoading ] = useState(false)
   const { isOpen, onClose, onOpen } = useDisclosure()

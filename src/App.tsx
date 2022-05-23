@@ -6,10 +6,12 @@ import { AuthProvider, useAuthContext } from './components/auth'
 import Navbar from './components/Navbar'
 import ErrorBoundary from './components/ErrorBoundary'
 // import ItemListPage from './pages/ItemList'
-import ItemCategoryPage from './pages/ItemCategory'
-import MarketPlacePage from './pages/MarketPlace'
+// import ItemCategoryPage from './pages/ItemCategory'
+// import MarketPlacePage from './pages/MarketPlace'
 
 const ItemListPage = lazy(() => import('./pages/ItemList'))
+const ItemCategoryPage = lazy(() => import('./pages/ItemCategory'))
+const MarketPlacePage = lazy(() => import('./pages/MarketPlace'))
 
 const Loading = (
   <Center w="100%" h="100vh">
