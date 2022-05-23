@@ -44,7 +44,7 @@ class Settings(BaseSettings):
         if self.db_driver == 'mysql':
             password = self.get_password()
             return URL.create(
-                drivername='mysql+mysqlconnector',
+                drivername='mysql+pymysql',
                 username=self.db_user,
                 password=password,
                 host=self.db_host,

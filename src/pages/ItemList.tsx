@@ -13,7 +13,7 @@ import { Formik, Field, Form, FieldProps } from 'formik'
 import { FaPlus, FaEdit, FaTrash, FaSave } from 'react-icons/fa'
 import Axios from 'axios'
 import { useAuthContext } from '../components/auth'
-import { ItemSchema, ItemType, ItemCategoriesSchema } from '../schema/Item'
+import { ItemSchema, ItemType, ItemCategoryListSchema } from '../schema/Item'
 import { EditorModeEnum } from './utils'
 import { Active, CheckboxField } from '../components/common'
 
@@ -148,13 +148,13 @@ interface ItemEditorDialogProps extends Omit<ComponentProps<typeof Modal>, 'chil
 
 function ItemEditorDialog({ item, mode, onClose, ...rest }: ItemEditorDialogProps) {
   const initialFocusRef = useRef(null)
-  const [categories, setCategories] = useState<yup.TypeOf<typeof ItemCategoriesSchema>>([])
+  const [categories, setCategories] = useState<yup.TypeOf<typeof ItemCategoryListSchema>>([])
   const toast = useToast()
   const { getItemCategories } = useAuthContext()
 
   useEffect(() => {
     getItemCategories().then(
-      response => setCategories(ItemCategoriesSchema.cast(response))
+      response => setCategories(ItemCategoryListSchema.cast(response))
     ).catch(
       error => console.log(error)
     )

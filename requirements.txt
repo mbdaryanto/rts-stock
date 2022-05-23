@@ -7,6 +7,6 @@ pydantic
 python-dotenv
 python-jose
 cryptography
-mysql-connector==2.1.7
+pymysql
 rich
 # strawberry-graphql[debug-server]
