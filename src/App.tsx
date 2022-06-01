@@ -24,29 +24,25 @@ const App = () => (
     <RecoilRoot>
       <AuthProvider>
         <Router>
-          <ErrorBoundary>
-            <Suspense fallback={Loading}>
-              <Routes>
-                <Route path="/" element={<LayoutPage/>}>
-                  <Route index element={'Main Page'}/>
-                  <Route path="login" element={'Login Page'}/>
-                  <Route path="items" element={<ItemListPage/>}/>
-                  <Route path="item-categories" element={<ItemCategoryPage/>}/>
-                  <Route path="market-place" element={<MarketPlacePage/>}/>
-                  <Route path="kartu-stok" element={
-                    <RequireAuth>
-                      <div>Kartu Stok</div>
-                    </RequireAuth>
-                  }/>
-                  <Route path="ringkasan-stok" element={
-                    <RequireAuth>
-                      <div>Ringkasan Stok</div>
-                    </RequireAuth>
-                  }/>
-                </Route>
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<LayoutPage/>}>
+              <Route index element={'Main Page'}/>
+              <Route path="login" element={'Login Page'}/>
+              <Route path="items" element={<ItemListPage/>}/>
+              <Route path="item-categories" element={<ItemCategoryPage/>}/>
+              <Route path="market-place" element={<MarketPlacePage/>}/>
+              <Route path="kartu-stok" element={
+                <RequireAuth>
+                  <div>Kartu Stok</div>
+                </RequireAuth>
+              }/>
+              <Route path="ringkasan-stok" element={
+                <RequireAuth>
+                  <div>Ringkasan Stok</div>
+                </RequireAuth>
+              }/>
+            </Route>
+          </Routes>
         </Router>
       </AuthProvider>
     </RecoilRoot>
@@ -54,9 +50,13 @@ const App = () => (
 )
 
 const LayoutPage = () => (
-  <Navbar title="Stock App">
-    <Outlet/>
-  </Navbar>
+  <ErrorBoundary>
+    <Suspense fallback={Loading}>
+      <Navbar title="Stock App">
+        <Outlet/>
+      </Navbar>
+    </Suspense>
+  </ErrorBoundary>
 )
 
 function RequireAuth({ children }: { children: JSX.Element }) {

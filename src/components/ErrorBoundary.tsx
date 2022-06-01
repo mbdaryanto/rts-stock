@@ -5,7 +5,7 @@ interface ErrorBoundaryProps {
 }
 
 interface ErrorBoundaryState {
-  hasError: boolean
+  // hasError: boolean
   error?: Error
   errorInfo?: ErrorInfo
 }
@@ -13,7 +13,7 @@ interface ErrorBoundaryState {
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {};
   }
 
   // static getDerivedStateFromError(error: Error, errorInfo: ErrorInfo) {
@@ -28,24 +28,27 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     // You can also log the error to an error reporting service
     console.log('Error', error, errorInfo)
     this.setState({
-      hasError: true,
+      // hasError: true,
       error,
       errorInfo
     })
   }
 
   render() {
-    if (this.state.hasError) {
-      // You can render any custom fallback UI
+    if (this.state.errorInfo) {
+      // Error path
       return (
         <div>
-          <h1>Something went wrong.</h1>
-          <div>Error: {JSON.stringify(this.state.error!, null, 2)}</div>
-          <div style={{ whiteSpace: 'pre' }}>{this.state.errorInfo!.componentStack}</div>
+          <h2>Something went wrong.</h2>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo.componentStack}
+          </details>
         </div>
-      )
+      );
     }
-
+    // Normally, just render children
     return this.props.children;
   }
 }
